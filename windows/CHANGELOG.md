@@ -1,0 +1,22 @@
+**日本語** · [English](CHANGELOG.en.md)
+
+# 変更履歴
+
+公開するバージョンごとの変更点です。同じ内容を GitHub の Releases にも載せます
+(手順は [docs/RELEASING.md](docs/RELEASING.md))。新しい順です。
+
+## [1.0.0] — 最初の公開
+
+[Louis-CFM/coucou](https://github.com/Louis-CFM/coucou) の Windows 版 0.1.1 からの Fork として、最初に公開するバージョンです。
+元との違いは**すべて** [RELEASE_NOTES.md](RELEASE_NOTES.md) にあります。主なもの:
+
+- ファイル編集の差分画面 (色つき、行番号つき、コマンドの出力つき)
+- プランの上限 (5時間 / 週間) の表示
+- Windows と各 WSL をつなぐ、アプリ内のセットアップ (差分を見てから書き込み、アンインストールで解除)
+- 履歴ビュー (Markdown 描画)、島を大きく広げる操作、島を左右にドラッグしてタブ (ホーム / チャット / 設定) を切り替え、ピンで開いたままにする
+- 権限まわり: 「常に許可」、危険なコマンドの検出、ホットキー、島から Claude の質問に答える
+- 右クリックのメニュー、トレイのダブルクリックで表示 / 非表示
+- ファイルのドロップ: どの画面でも、島が閉じていても。画像のプレビュー
+- English / 日本語
+
+**削除**: サービス連携 (Stripe、GitHub、Vercel、n8n、Resend、Notion、Cal.com)、macOS / iPhone 版のファイル、配布用のワークフロー。

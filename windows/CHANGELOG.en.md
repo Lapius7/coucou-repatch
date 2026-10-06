@@ -1,0 +1,24 @@
+[日本語](CHANGELOG.md) · **English**
+
+# Changelog
+
+What changed in each published version. The same text goes into the GitHub release
+(see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
+
+## [1.0.0] — first release
+
+The first published version of this fork of [Louis-CFM/coucou](https://github.com/Louis-CFM/coucou), starting from its
+Windows app 0.1.1. **Everything** that differs from the original is in [RELEASE_NOTES.en.md](RELEASE_NOTES.en.md). The main
+points:
+
+- File-edit diffs (colour, line numbers, the output of the last command)
+- Plan limits (5-hour and weekly)
+- In-app setup that connects Windows and every WSL distro (review the diff, then write; uninstalling disconnects)
+- History view (rendered as Markdown), enlarging the island, dragging it sideways to switch tabs (home / chat / settings), a pin to keep it open
+- Permissions: "always allow", dangerous-command detection, hotkeys, answering Claude's questions from the island
+- A right-click menu, and a double-click on the tray icon to hide / show the island
+- File drop: from any screen, even with the island closed; picture previews
+- English and Japanese
+
+**Removed**: the service integrations (Stripe, GitHub, Vercel, n8n, Resend, Notion, Cal.com), the macOS and iPhone files,
+the distribution workflows.
