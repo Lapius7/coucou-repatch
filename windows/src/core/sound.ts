@@ -84,8 +84,16 @@ class SoundEngine {
     this.enabled = on;
   }
 
+  /** Quiet hours: asked for every sound by name; true = stay silent. */
+  private mute: ((name: string) => boolean) | null = null;
+
+  setMute(fn: ((name: string) => boolean) | null) {
+    this.mute = fn;
+  }
+
   play(name: SoundName | string) {
     if (!this.enabled) return;
+    if (this.mute?.(name)) return;
     const ctx = this.ctx;
     const master = this.master;
     const buf = this.buffers.get(name);

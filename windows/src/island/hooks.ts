@@ -10,6 +10,7 @@ import { dangerOf, matchRule, ruleFor } from "../core/rules";
 import { recordTurn } from "../core/usage";
 import { buildRows, type Hunk } from "../core/diff";
 import { t as tr } from "../core/i18n";
+import { mutedNow } from "../core/quiet";
 import { firstLine } from "../views/markdown";
 import type { Island } from "./island";
 
@@ -239,7 +240,7 @@ function recordEdit(island: Island, agentId: string, focused: boolean, tool: str
   if (!hidden) {
     void Bridge.readTextFile(file).then((text) => {
       if (!text) return;
-      const full = buildRows(hunks, text);
+      const full = buildRows(hunks, text, State.settings.diffContext);
       Object.assign(rec, { rows: full.rows, more: full.more, placed: full.placed });
       State.notify();
     });
@@ -274,7 +275,8 @@ function recordOutput(agentId: string, input: Record<string, unknown>, response:
 function cue(kind: "finish" | "approval" | "error", title: string, body: string) {
   const mode = State.settings.notifyMode;
   if (mode === "sound" || mode === "both") Sound.play(kind);
-  if (mode === "toast" || mode === "both") void Bridge.notify(title, body);
+  // Quiet hours hold back the notification too (Sound.play asks for itself).
+  if ((mode === "toast" || mode === "both") && !mutedNow(State.settings, kind)) void Bridge.notify(title, body);
 }
 
 /** AskUserQuestion's tool_input, if it is shaped the way we can answer. */

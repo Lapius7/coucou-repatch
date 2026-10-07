@@ -141,7 +141,7 @@ export class Island {
       },
       always: () => {
         const req = State.pendingApproval;
-        if (req?.rule) addRule(req.rule);
+        if (req?.rule) addRule(req.rule, State.settings.ruleDays);
         actions.decide("allow");
       },
       // AskUserQuestion: the chosen labels go back as the tool's answers.
@@ -283,7 +283,7 @@ export class Island {
   }
 
   launch() {
-    this.fsm.launch();
+    this.fsm.launch(State.settings.showGreeting);
   }
 
   // ── Mode / view ─────────────────────────────────────────────────────────────

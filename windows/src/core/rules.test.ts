@@ -134,3 +134,25 @@ describe("the saved list", () => {
     expect(loadRules()).toEqual([rule]);
   });
 });
+
+describe("rules that run out", () => {
+  const now = 1_700_000_000_000;
+  const day = 86_400_000;
+  const rule = { tool: "Bash", scope: "git status", label: "g" };
+
+  it("lasts for ever without a number of days", () => {
+    addRule(rule, 0, now);
+    expect(loadRules(now + 3650 * day)).toHaveLength(1);
+  });
+
+  it("is gone after its days", () => {
+    addRule(rule, 7, now);
+    expect(loadRules(now + 6 * day)).toHaveLength(1);
+    expect(loadRules(now + 7 * day + 1)).toHaveLength(0);
+  });
+
+  it("an expired rule is not matched", () => {
+    addRule(rule, 1, Date.now() - 2 * day);
+    expect(matchRule("Bash", { command: "git status" })).toBeNull();
+  });
+});

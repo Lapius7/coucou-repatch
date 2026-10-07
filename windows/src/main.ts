@@ -8,6 +8,7 @@ import { Island } from "./island/island";
 import { registerHookHandlers } from "./island/hooks";
 import { loadAccounts, loadPlans, parseAccount, parsePlan, parsePlanText, saveAccounts, savePlans, sourceOf, startPlanClock } from "./core/plan";
 import { setLanguage, t } from "./core/i18n";
+import { mutedNow } from "./core/quiet";
 
 async function main() {
   const root = document.getElementById("root");
@@ -23,6 +24,7 @@ async function main() {
   if (!IS_TAURI) State.settings.language = new URLSearchParams(location.search).get("lang") ?? State.settings.language;
   setLanguage(State.settings.language);
   const island = new Island(root);
+  Sound.setMute((name) => mutedNow(State.settings, name));
   island.applySettings();
   State.loadIntegrationTasks();
   if (boot && !boot.cursorPoll) island.followPageCursor();
@@ -121,7 +123,15 @@ async function main() {
     }
   };
   window.setTimeout(() => void probePlans(), 4000);
-  window.setInterval(() => void probePlans(), 30 * 60_000);
+  // How often is a setting (0 = never); it is read each time, so a change counts at once.
+  const scheduleProbe = () => {
+    const minutes = State.settings.planProbeMinutes;
+    window.setTimeout(() => {
+      if (State.settings.planProbeMinutes > 0) void probePlans();
+      scheduleProbe();
+    }, (minutes > 0 ? minutes : 5) * 60_000);
+  };
+  scheduleProbe();
   startPlanClock(() => State.planView());
   // `npm run dev` in a plain browser: `__statusline({rate_limits: {five_hour: {...}, seven_day: {...}}, cwd: "/home/me"})`.
   if (!IS_TAURI) (window as unknown as { __statusline: (raw: unknown) => void }).__statusline = takePlan;

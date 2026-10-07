@@ -65,7 +65,8 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         let mut current = shared.settings.lock().unwrap();
         let screen_changed = current.screen != settings.screen;
         let autostart_changed = current.autostart != settings.autostart;
-        let scale_changed = (current.ui_scale - settings.ui_scale).abs() > f64::EPSILON;
+        let scale_changed = (current.ui_scale - settings.ui_scale).abs() > f64::EPSILON
+            || (current.ui_offset_x - settings.ui_offset_x).abs() > f64::EPSILON;
         *current = settings.clone();
         (screen_changed, autostart_changed, scale_changed)
     };
@@ -80,6 +81,7 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         }
     }
     if scale_changed {
+        island::set_offset(settings.ui_offset_x);
         let collapsed = shared.gate.collapsed.load(Ordering::Relaxed);
         island::set_zoom(&app, settings.ui_scale, &settings.screen, collapsed);
     } else if screen_changed {
@@ -519,6 +521,7 @@ pub fn run() {
 
             if let Some(win) = island::window(&handle) {
                 platform::make_non_activating(&win);
+                island::set_offset(loaded.ui_offset_x);
                 island::set_zoom(&handle, loaded.ui_scale, &loaded.screen, false);
                 let _ = win.show();
             }

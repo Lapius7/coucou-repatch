@@ -44,6 +44,36 @@ pub struct Settings {
     /// "auto" (follow Windows), or a language code such as "en" or "ja".
     #[serde(default = "default_language")]
     pub language: String,
+    /// Lines of code shown above and below a change in the diff view.
+    #[serde(default = "default_diff_context")]
+    pub diff_context: u32,
+    /// How many entries a session's history keeps.
+    #[serde(default = "default_log_limit")]
+    pub log_limit: u32,
+    /// Minutes between asking each Claude Code install for its plan limits; 0 = never.
+    #[serde(default = "default_probe_minutes")]
+    pub plan_probe_minutes: u32,
+    /// What the closed notch shows of the plan limits: "both", "five", "week" or "none".
+    #[serde(default = "default_compact_plan")]
+    pub compact_plan: String,
+    /// Wave hello when Coucou starts.
+    #[serde(default = "default_true")]
+    pub show_greeting: bool,
+    /// Quiet hours: no sound, no notification (unless a request waits for you).
+    #[serde(default)]
+    pub quiet_enabled: bool,
+    #[serde(default = "default_quiet_from")]
+    pub quiet_from: String,
+    #[serde(default = "default_quiet_to")]
+    pub quiet_to: String,
+    #[serde(default = "default_true")]
+    pub quiet_approvals: bool,
+    /// Days a remembered "always allow" rule lasts; 0 = for ever.
+    #[serde(default)]
+    pub rule_days: u32,
+    /// How far the island sits from the centre of the screen, in px (negative = left).
+    #[serde(default)]
+    pub ui_offset_x: f64,
     /// How the closed island looks: "notch" (the small island with the plan limits) or "bar" (a thin bar).
     #[serde(default = "default_closed_style")]
     pub closed_style: String,
@@ -73,6 +103,30 @@ pub struct Settings {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_diff_context() -> u32 {
+    3
+}
+
+fn default_log_limit() -> u32 {
+    120
+}
+
+fn default_probe_minutes() -> u32 {
+    30
+}
+
+fn default_compact_plan() -> String {
+    "both".into()
+}
+
+fn default_quiet_from() -> String {
+    "23:00".into()
+}
+
+fn default_quiet_to() -> String {
+    "07:00".into()
 }
 
 fn default_closed_style() -> String {
@@ -143,6 +197,17 @@ impl Default for Settings {
             plan_source: default_plan_source(),
             live_diff: false,
             language: default_language(),
+            diff_context: default_diff_context(),
+            log_limit: default_log_limit(),
+            plan_probe_minutes: default_probe_minutes(),
+            compact_plan: default_compact_plan(),
+            show_greeting: true,
+            quiet_enabled: false,
+            quiet_from: default_quiet_from(),
+            quiet_to: default_quiet_to(),
+            quiet_approvals: true,
+            rule_days: 0,
+            ui_offset_x: 0.0,
             closed_style: default_closed_style(),
             ui_scale: default_ui_scale(),
             tip_email: default_tip_email(),
@@ -203,6 +268,11 @@ mod tests {
         assert!(!s.setup_done);
         assert_eq!(s.ui_scale, 1.0);
         assert_eq!(s.closed_style, "notch");
+        assert_eq!((s.diff_context, s.log_limit, s.plan_probe_minutes), (3, 120, 30));
+        assert_eq!(s.compact_plan, "both");
+        assert!(s.show_greeting && !s.quiet_enabled && s.quiet_approvals);
+        assert_eq!((s.quiet_from.as_str(), s.quiet_to.as_str()), ("23:00", "07:00"));
+        assert_eq!((s.rule_days, s.ui_offset_x), (0, 0.0));
         assert_eq!(s.tip_email, "full");
         assert!(s.tip_source && s.tip_plan && s.tip_five && s.tip_week && s.tip_reset);
         assert!(!s.tip_updated);

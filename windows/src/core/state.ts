@@ -83,7 +83,6 @@ export interface CommandOutput {
 }
 
 /** Entries kept per task: enough for a long session, small enough to stay cheap. */
-const LOG_LIMIT = 120;
 
 /** Claude Code is either the VS Code pill or one pill per running session. */
 export const SESSION_PREFIX = "session_";
@@ -181,6 +180,24 @@ export interface Settings {
   planSource: string;
   /** "auto" (follow Windows) or a language code from core/i18n.ts. */
   language: string;
+  /** Lines of code around a change in the diff view. */
+  diffContext: number;
+  /** Entries kept in a session's history. */
+  logLimit: number;
+  /** Minutes between plan-limit probes (0 = never). */
+  planProbeMinutes: number;
+  /** What the closed notch shows of the plan limits. */
+  compactPlan: "both" | "five" | "week" | "none";
+  /** Wave hello at launch. */
+  showGreeting: boolean;
+  quietEnabled: boolean;
+  quietFrom: string;
+  quietTo: string;
+  quietApprovals: boolean;
+  /** Days a remembered "always allow" lasts (0 = for ever). */
+  ruleDays: number;
+  /** Island position, px from the centre (negative = left). */
+  uiOffsetX: number;
   /** How the closed island looks: the small notch, or a thin bar. */
   closedStyle: "notch" | "bar";
   /** How large the island is drawn (0.8 – 1.5). */
@@ -237,6 +254,17 @@ export const DEFAULT_SETTINGS: Settings = {
   liveDiff: false,
   planSource: "auto",
   language: "auto",
+  diffContext: 3,
+  logLimit: 120,
+  planProbeMinutes: 30,
+  compactPlan: "both",
+  showGreeting: true,
+  quietEnabled: false,
+  quietFrom: "23:00",
+  quietTo: "07:00",
+  quietApprovals: true,
+  ruleDays: 0,
+  uiOffsetX: 0,
   closedStyle: "notch",
   uiScale: 1,
   tipEmail: "full",
@@ -298,6 +326,7 @@ class AppState {
       tag: both ? (hit.source === "wsl" ? "WSL" : "Win") : undefined,
       source: hit.source,
       account: this.accounts[hit.source],
+      compact: this.settings.compactPlan,
       tip: {
         email: this.settings.tipEmail,
         source: this.settings.tipSource,
@@ -407,7 +436,8 @@ class AppState {
     const t = this.tasks.find((x) => x.id === id);
     if (!t || !text) return;
     (t.log ??= []).push({ kind, text, at: Date.now(), editId });
-    if (t.log.length > LOG_LIMIT) t.log.splice(0, t.log.length - LOG_LIMIT);
+    const limit = Math.max(20, this.settings.logLimit || 120);
+    if (t.log.length > limit) t.log.splice(0, t.log.length - limit);
     this.notify();
   }
 

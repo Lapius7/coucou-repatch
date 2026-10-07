@@ -27,9 +27,10 @@ export class IslandStateMachine {
 
   // ── Inputs ──────────────────────────────────────────────────────────────────
 
-  launch() {
+  launch(greet = true) {
     this.cancelTimers();
-    this.transition("coucou");
+    // Without the greeting the island just shows itself, as it does when the mouse comes to the top.
+    this.transition(greet ? "coucou" : "petit");
   }
 
   mouseEntered() {

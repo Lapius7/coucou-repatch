@@ -72,3 +72,21 @@ describe("buildRows", () => {
     expect(r.add).toBe(300);
   });
 });
+
+describe("the lines around a change are a setting", () => {
+  const file = Array.from({ length: 30 }, (_, i) => (i === 14 ? "new" : `l${i + 1}`)).join("\n") + "\n";
+  const hunk = [{ old: "old", new: "new" }];
+
+  it("none, a few, many", () => {
+    const rows = (n: number) => buildRows(hunk, file, n).rows;
+    expect(rows(0).map((r) => r.kind)).toEqual(["del", "add"]);
+    expect(rows(1)).toHaveLength(2 + 2);
+    expect(rows(3)).toHaveLength(2 + 6);
+    expect(rows(10)).toHaveLength(2 + 20);
+  });
+
+  it("stops at the ends of the file", () => {
+    const top = buildRows([{ old: "x", new: "l1" }], file, 10).rows;
+    expect(top.filter((r) => r.kind === "ctx")).toHaveLength(10); // nothing above line 1
+  });
+});

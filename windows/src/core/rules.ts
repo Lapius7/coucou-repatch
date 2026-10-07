@@ -19,6 +19,8 @@ export interface AllowRule {
   scope: string;
   /** What the settings window and the card show. */
   label: string;
+  /** When it stops counting (epoch ms); absent = for ever. */
+  until?: number;
 }
 
 const SHELL_TOOLS = new Set(["Bash", "PowerShell"]);
@@ -116,11 +118,16 @@ export function ruleFor(tool: string, input: Record<string, unknown>): AllowRule
   return null;
 }
 
-export function loadRules(): AllowRule[] {
+export function loadRules(now = Date.now()): AllowRule[] {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
     return Array.isArray(raw)
-      ? raw.filter((r) => r && typeof r.tool === "string" && typeof r.scope === "string" && typeof r.label === "string")
+      ? raw.filter(
+          (r) =>
+            r && typeof r.tool === "string" && typeof r.scope === "string" && typeof r.label === "string" &&
+            // A rule that has run out is as good as gone.
+            (typeof r.until !== "number" || r.until > now),
+        )
       : [];
   } catch {
     return [];
@@ -135,9 +142,11 @@ function saveRules(rules: AllowRule[]) {
   }
 }
 
-export function addRule(rule: AllowRule) {
-  const rules = loadRules();
-  if (!rules.some((r) => r.tool === rule.tool && r.scope === rule.scope)) saveRules([...rules, rule]);
+/** `days`: how long it lasts (0 = for ever). */
+export function addRule(rule: AllowRule, days = 0, now = Date.now()) {
+  const rules = loadRules(now);
+  const entry = days > 0 ? { ...rule, until: now + days * 86_400_000 } : rule;
+  if (!rules.some((r) => r.tool === rule.tool && r.scope === rule.scope)) saveRules([...rules, entry]);
 }
 
 export function removeRule(rule: AllowRule) {

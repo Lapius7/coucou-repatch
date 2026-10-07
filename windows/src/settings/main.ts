@@ -305,6 +305,131 @@ function apiSection(hasKey: boolean): HTMLElement {
 
 // ── General section ───────────────────────────────────────────────────────────
 
+// ── More settings ─────────────────────────────────────────────────────────────
+
+/** A row with a list of choices for one setting. */
+function choice<K extends keyof Settings>(label: string, key: K, options: [Settings[K], string][]): HTMLElement {
+  const select = h("select", {}) as HTMLSelectElement;
+  for (const [value, text] of options) select.append(h("option", { value: String(value), text }));
+  // A value that is not on the list (an older or edited file) is added, not lost.
+  if (!options.some(([v]) => String(v) === String(settings[key]))) {
+    select.append(h("option", { value: String(settings[key]), text: String(settings[key]) }));
+  }
+  select.value = String(settings[key]);
+  select.addEventListener("change", () => {
+    const raw = select.value;
+    (settings[key] as unknown) = typeof settings[key] === "number" ? Number(raw) : raw;
+    void save();
+  });
+  return h("div", { class: "row" }, h("label", { text: label }), select);
+}
+
+function advancedSection(): HTMLElement {
+  const flag = (label: string, key: "showGreeting" | "quietEnabled" | "quietApprovals", hint?: string) =>
+    h("div", { class: "row" },
+      h("label", { text: label }),
+      toggle(settings[key], (v) => {
+        settings[key] = v;
+        void save();
+      }),
+      ...(hint ? [h("span", { class: "hint", text: hint })] : []),
+    );
+
+  const time = (label: string, key: "quietFrom" | "quietTo") => {
+    const input = h("input", { type: "time", value: settings[key], style: "width:110px" }) as HTMLInputElement;
+    input.addEventListener("change", () => {
+      if (!input.value) return;
+      settings[key] = input.value;
+      void save();
+    });
+    return h("div", { class: "row" }, h("label", { text: label }), input);
+  };
+
+  const offsets = [-400, -300, -200, -100, 0, 100, 200, 300, 400].map((px): [number, string] => [
+    px,
+    px === 0 ? t("adv.offset.0") : px < 0 ? t("adv.offset.left", { n: -px }) : t("adv.offset.right", { n: px }),
+  ]);
+
+  // Copy the settings out, load them back in, or start again.
+  const note = h("div", { class: "hint" });
+  const paste = h("textarea", { rows: "4", style: "width:100%;font:11.5px monospace" }) as HTMLTextAreaElement;
+  const pasteBox = h("div", { style: "display:none;flex-direction:column;gap:6px" },
+    h("div", { class: "hint", text: t("adv.importHint") }),
+    paste,
+    h("div", { class: "row" }, h("button", {
+      class: "primary", text: t("adv.importGo"),
+      onclick: async () => {
+        try {
+          const raw = JSON.parse(paste.value);
+          if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("not an object");
+          // Only settings that exist; what depends on this PC (hooks, first-run) stays as it is.
+          const keep: Partial<Settings> = {};
+          for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
+            if (key === "hooksInstalled" || key === "setupDone" || !(key in raw)) continue;
+            if (typeof raw[key] === typeof DEFAULT_SETTINGS[key]) (keep as Record<string, unknown>)[key] = raw[key];
+          }
+          settings = { ...settings, ...keep };
+          await save();
+          location.reload();
+        } catch {
+          note.textContent = t("adv.importBad");
+        }
+      },
+    })),
+  );
+
+  let armed = false;
+  const reset = h("button", { class: "danger", text: t("adv.reset") });
+  reset.addEventListener("click", async () => {
+    if (!armed) {
+      armed = true;
+      reset.textContent = t("adv.resetSure");
+      window.setTimeout(() => {
+        armed = false;
+        reset.textContent = t("adv.reset");
+      }, 4000);
+      return;
+    }
+    settings = { ...DEFAULT_SETTINGS, hooksInstalled: settings.hooksInstalled, setupDone: true, language: settings.language };
+    await save();
+    location.reload();
+  });
+
+  return h("section", {},
+    h("h2", {}, h("span", { text: t("adv.title") })),
+    choice(t("adv.diffContext"), "diffContext", [0, 1, 2, 3, 5, 8, 10].map((n): [number, string] => [n, String(n)])),
+    choice(t("adv.logLimit"), "logLimit", [60, 120, 300, 600].map((n): [number, string] => [n, String(n)])),
+    choice(t("adv.probe"), "planProbeMinutes", [[0, t("adv.probe.0")], ...[10, 30, 60].map((n): [number, string] => [n, t("adv.probe.min", { n })])]),
+    choice(t("adv.compact"), "compactPlan", [
+      ["both", t("adv.compact.both")], ["five", t("adv.compact.five")], ["week", t("adv.compact.week")], ["none", t("adv.compact.none")],
+    ]),
+    choice(t("adv.ruleDays"), "ruleDays", [[0, t("adv.ruleDays.0")], ...[1, 7, 30].map((n): [number, string] => [n, t("adv.ruleDays.n", { n })])]),
+    choice(t("adv.offset"), "uiOffsetX", offsets),
+    flag(t("adv.greeting"), "showGreeting"),
+    flag(t("adv.quiet"), "quietEnabled", t("adv.quietHint")),
+    time(t("adv.quietFrom"), "quietFrom"),
+    time(t("adv.quietTo"), "quietTo"),
+    flag(t("adv.quietApprovals"), "quietApprovals"),
+    h("div", { class: "row" },
+      h("button", {
+        text: t("adv.export"),
+        onclick: async () => {
+          try {
+            await navigator.clipboard.writeText(JSON.stringify(settings, null, 2));
+            note.textContent = t("adv.exported");
+          } catch {
+            note.textContent = JSON.stringify(settings);
+          }
+        },
+      }),
+      h("button", { text: t("adv.import"), onclick: () => { pasteBox.style.display = pasteBox.style.display === "none" ? "flex" : "none"; } }),
+      reset,
+    ),
+    pasteBox,
+    note,
+  );
+}
+
 /** The closed island: the small notch, or a thin bar. */
 function closedSelect(): HTMLElement {
   const select = h("select", {}) as HTMLSelectElement;
@@ -731,6 +856,7 @@ async function main() {
     connectSection(status.hookReady),
     apiSection(hasKey),
     generalSection(),
+    advancedSection(),
     hotkeysSection(),
     rulesSection(),
     usageSection(),

@@ -7,6 +7,14 @@ What changed in each published version. The same text goes into the GitHub relea
 
 ## [Unreleased]
 
+- **Added**: a "More settings" section in the settings window:
+  - lines around a change in the diff (0–10), entries kept in the history, how often plan limits are fetched (never / 10 / 30 / 60 min)
+  - what the closed notch shows of the limits (both / one / nothing)
+  - **quiet hours** (no sound, no notification; optionally still ring when Claude waits for you)
+  - how long an "always allow" lasts (for ever / 1, 7, 30 days), the launch greeting on or off
+  - **island position** (up to 400 px left or right of the centre)
+  - copy the settings, paste them back in, reset to the defaults
+
 - **Fixed**: around the closed notch (a few dozen pixels) clicks were swallowed, so the window underneath could not be
   touched. The margin of the hit area went from 14 px to 3 px.
 - **Added**: the closed island can be a **thin bar** (mini settings panel, Settings → General → "When closed"). Only a wide, rounded

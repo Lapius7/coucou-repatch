@@ -109,7 +109,7 @@ function lineOf(text: string, needle: string): number | null {
  * The rows to draw for an edit. With the file's text (read after the edit) the rows get
  * line numbers and a few lines of code on each side; without it, only the change.
  */
-export function buildRows(hunks: Hunk[], fileText: string | null): EditRows {
+export function buildRows(hunks: Hunk[], fileText: string | null, context = CONTEXT): EditRows {
   // The file's lines: its final newline is not a line of its own.
   const fileLines = fileText ? split(fileText) : null;
   const rows: DiffRow[] = [];
@@ -126,7 +126,7 @@ export function buildRows(hunks: Hunk[], fileText: string | null): EditRows {
     if (index > 0) rows.push({ kind: "gap", text: "⋯" });
     if (start !== null && fileLines) {
       placed = true;
-      for (let n = Math.max(1, start - CONTEXT); n < start; n++) rows.push({ kind: "ctx", text: fileLines[n - 1], no: n });
+      for (let n = Math.max(1, start - context); n < start; n++) rows.push({ kind: "ctx", text: fileLines[n - 1], no: n });
     }
     let oldNo = start;
     let newNo = start;
@@ -147,7 +147,7 @@ export function buildRows(hunks: Hunk[], fileText: string | null): EditRows {
     }
     if (start !== null && fileLines) {
       const next = start + after.length;
-      for (let n = next; n < next + CONTEXT && n <= fileLines.length; n++) rows.push({ kind: "ctx", text: fileLines[n - 1], no: n });
+      for (let n = next; n < next + context && n <= fileLines.length; n++) rows.push({ kind: "ctx", text: fileLines[n - 1], no: n });
     }
   });
 

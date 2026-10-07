@@ -177,6 +177,17 @@ pub fn screen_info(app: &AppHandle, pref: &str) -> ScreenInfo {
 /// How large the island is drawn (the "island size" setting): the webview is zoomed by this and the
 /// window is made this much bigger, so the page still sees the same 720×520 px and needs no change.
 static UI_ZOOM_BITS: AtomicU64 = AtomicU64::new(0x3FF0_0000_0000_0000); // 1.0
+/// How far the island sits from the centre of the screen, in px (the page's px; negative = left).
+static UI_OFFSET_BITS: AtomicU64 = AtomicU64::new(0); // 0.0
+
+pub fn set_offset(value: f64) {
+    let v = if value.is_finite() { value.clamp(-1200.0, 1200.0) } else { 0.0 };
+    UI_OFFSET_BITS.store(v.to_bits(), Ordering::Relaxed);
+}
+
+fn offset() -> f64 {
+    f64::from_bits(UI_OFFSET_BITS.load(Ordering::Relaxed))
+}
 
 pub fn zoom() -> f64 {
     f64::from_bits(UI_ZOOM_BITS.load(Ordering::Relaxed))
@@ -219,7 +230,10 @@ fn place(app: &AppHandle, pref: &str, lw: f64, lh: f64) {
     let z = zoom();
     let pw = (lw * z * scale).round().max(1.0) as u32;
     let ph = (lh * z * scale).round().max(1.0) as u32;
-    let x = mp.x + (ms.width as i32 - pw as i32) / 2;
+    let centred = mp.x + (ms.width as i32 - pw as i32) / 2;
+    // Moved sideways by the setting, but never off the screen.
+    let moved = centred + (offset() * z * scale).round() as i32;
+    let x = if pw as i32 <= ms.width as i32 { moved.clamp(mp.x, mp.x + ms.width as i32 - pw as i32) } else { centred };
     let y = mp.y;
 
     // GTK never sizes a non-resizable window below its natural size (200 px

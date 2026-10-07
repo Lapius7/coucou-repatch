@@ -246,6 +246,8 @@ export interface PlanView {
   account?: PlanAccount;
   /** What the hover shows (everything but "updated" when absent). */
   tip?: TipOptions;
+  /** What the closed notch shows: both windows, only the 5-hour one, only the weekly one, or nothing. */
+  compact?: "both" | "five" | "week" | "none";
 }
 
 /** "work@example.com" → "w***@example.com". */
@@ -390,6 +392,17 @@ export function paintPlan(el: HTMLElement, view: PlanView | null, variant: "comp
   const parts: ["five" | "week", PlanWindow][] = [];
   if (plan.fiveHour) parts.push(["five", plan.fiveHour]);
   if (plan.sevenDay) parts.push(["week", plan.sevenDay]);
+  // The closed notch can be asked to show only one of them, or none.
+  if (variant === "compact" && view.compact && view.compact !== "both") {
+    const keep = parts.filter(([label]) => (view.compact === "five" ? label === "five" : view.compact === "week" ? label === "week" : false));
+    parts.splice(0, parts.length, ...keep);
+  }
+  if (parts.length === 0) {
+    el.replaceChildren();
+    delete el.dataset.sig;
+    el.removeAttribute("title");
+    return false;
+  }
 
   // The words after the percentage: time left and the reset clock (the closed island
   // only has room for the 5-hour clock).
