@@ -25,6 +25,8 @@ export interface ViewActions {
   decide(d: "allow" | "deny"): void;
   /** Change some settings from the in-island panel (saved, and applied right away). */
   setSettings(patch: Partial<typeof State.settings>): void;
+  /** Open the history already pulled larger (for "Read" on a finished card: there is more to read). */
+  openLogLarge(): void;
   /** The pin in the header: keep the island open. */
   togglePin(): void;
   /** Leave the diff view: back to where it was opened from. */
@@ -827,7 +829,7 @@ function buildError(actions: ViewActions): ViewHost {
   const detail = h("div", { class: "detail err-detail" });
   const row = h("div", { class: "actions" },
     btn("OK", "primary", () => actions.collapse()),
-    btn(t("err.history"), "secondary", () => actions.setView("log")),
+    btn(t("err.history"), "secondary", () => actions.openLogLarge()),
   );
   const el = h("div", { class: "view" }, card("red", stack(116, 16, who, title, detail, row)));
   return {
@@ -858,13 +860,13 @@ function buildFinished(actions: ViewActions, onHeightChange: () => void): ViewHo
   const who = h("div");
   const title = h("div", { class: "title clamp4" });
   const detail = h("div", { class: "sub finished-sub" });
-  const read = btn(t("fin.read"), "secondary", () => actions.setView("log"));
+  const read = btn(t("fin.read"), "secondary", () => actions.openLogLarge());
   const row = h("div", { class: "actions" },
     btn("OK", "primary", () => actions.collapse()),
     read,
   );
   title.style.cursor = "pointer";
-  title.addEventListener("click", () => actions.setView("log"));
+  title.addEventListener("click", () => actions.openLogLarge());
   const el = h("div", { class: "view" }, card("green", stack(116, 16, who, title, detail, row)));
   return {
     el,

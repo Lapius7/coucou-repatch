@@ -161,6 +161,10 @@ export class Island {
         void Bridge.approvalDecline(req.requestId);
         this.closeApproval(req.taskId);
       },
+      openLogLarge: () => {
+        State.enlarged = true;
+        this.setView("log");
+      },
       togglePin: () => {
         State.userPinned = !State.userPinned;
         this.fsm.pinned = State.keepOpen;

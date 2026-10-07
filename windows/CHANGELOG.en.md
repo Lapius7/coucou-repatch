@@ -5,6 +5,11 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
+## [Unreleased]
+
+- **Changed**: "Read" on the finished card (and a click on its title) and "Open history" on the error card now open the history
+  at the **larger size**, the same as when you pull the island down.
+
 ## [1.2.1] — a picture fix
 
 - **Fixed**: in a conversation where the question had already been sent, the attached picture (file) could still be removed by
