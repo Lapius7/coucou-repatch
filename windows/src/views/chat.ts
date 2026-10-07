@@ -35,7 +35,11 @@ function typingDots(): HTMLElement {
 function contextChip(label: string, path: string, setExtra: (px: number) => void, openLarge: (url: string) => void): HTMLElement {
   const dot = h("i", { class: "chip-dot" });
   const chip = h("div", { class: "chip", title: t("chat.removeFile") }, dot, h("span", { text: label }), h("b", { class: "chip-x", text: "×" }));
+  // Once a question has been sent, the file belongs to the conversation: it can still be looked at,
+  // but no longer taken away.
+  const locked = () => State.chatHistory.length > 0;
   const remove = () => {
+    if (locked()) return;
     State.droppedFile = null;
     State.promptContext = null;
     State.notify();
@@ -74,6 +78,7 @@ function contextChip(label: string, path: string, setExtra: (px: number) => void
         let dx = 0;
         chip.style.transition = "none";
         const move = (m: MouseEvent) => {
+          if (locked()) return;
           dx = m.clientX - startX;
           chip.style.transform = `translateX(${dx}px)`;
           chip.style.opacity = String(1 - Math.min(0.8, Math.abs(dx) / 220));
@@ -82,7 +87,7 @@ function contextChip(label: string, path: string, setExtra: (px: number) => void
           window.removeEventListener("mousemove", move);
           window.removeEventListener("mouseup", up);
           chip.style.transition = "transform 0.18s ease-out, opacity 0.18s ease-out";
-          if (Math.abs(dx) >= 70) {
+          if (Math.abs(dx) >= 70 && !locked()) {
             // Thrown off to the side it was dragged to.
             chip.style.transform = `translateX(${dx < 0 ? -320 : 320}px)`;
             chip.style.opacity = "0";
@@ -203,6 +208,15 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     el,
     sync() {
       const file = State.droppedFile;
+      // After the first question the picture is part of the conversation: no × and no dragging it away.
+      const chipEl = chipRow.firstElementChild as HTMLElement | null;
+      if (chipEl) {
+        const sent = State.chatHistory.length > 0;
+        chipEl.classList.toggle("locked", sent);
+        // The "remove" hint only while it can be removed (a picture's title is empty anyway).
+        if (sent) chipEl.title = "";
+        else if (!chipEl.classList.contains("thumb-big")) chipEl.title = t("chat.removeFile");
+      }
       const wantChip = file ? `${file.name}|${file.path}` : "";
       if (chipRow.dataset.label !== wantChip) {
         chipRow.dataset.label = wantChip;

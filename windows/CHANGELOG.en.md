@@ -5,6 +5,11 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
+## [Unreleased]
+
+- **Fixed**: in a conversation where the question had already been sent, the attached picture (file) could still be removed by
+  dragging it or with the ×. After sending you can look at it (click to enlarge) but not take it away.
+
 ## [1.2.0] — the thin bar and more settings
 
 - **Added**: a "More settings" section in the settings window:
