@@ -2230,7 +2230,8 @@ input[type="range"]::-webkit-slider-thumb {
   background: rgba(244, 80, 94, 0.9);
 }
 
-/* Closed as a thin bar: nothing but the bar, tinted by the focused session's state */
+/* Closed as a thin bar, like the iPad's home indicator turned upside down: a wide rounded line a little
+   below the top edge, tinted by what the focused session is doing */
 #island.bar #plan-compact,
 #island.bar #mini-grid,
 #island.bar #bot-canvas,
@@ -2240,25 +2241,28 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 #island.bar {
-  background: #202228;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+  margin-top: 7px;
+  /* The page sets the radius inline for the notch shape: the bar is round all the way. */
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 1px 6px rgba(0, 0, 0, 0.35);
   transition: background 0.3s, box-shadow 0.3s;
 }
 
 #island.bar[data-state="working"],
 #island.bar[data-state="searching"] {
-  background: #3b82f6;
+  background: #60a5fa;
   animation: bar-pulse 1.6s ease-in-out infinite;
 }
 
 #island.bar[data-state="thinking"] {
-  background: #8b5cf6;
+  background: #a78bfa;
   animation: bar-pulse 1.6s ease-in-out infinite;
 }
 
 #island.bar[data-state="approval"],
 #island.bar[data-state="question"] {
-  background: #f59e0b;
+  background: #fbbf24;
   animation: bar-pulse 0.9s ease-in-out infinite;
 }
 
@@ -2267,7 +2271,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 #island.bar[data-state="finished"] {
-  background: #22c55e;
+  background: #34d399;
 }
 
 @keyframes bar-pulse {

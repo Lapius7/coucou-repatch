@@ -9,8 +9,8 @@ What changed in each published version. The same text goes into the GitHub relea
 
 - **Fixed**: around the closed notch (a few dozen pixels) clicks were swallowed, so the window underneath could not be
   touched. The margin of the hit area went from 14 px to 3 px.
-- **Added**: the closed island can be a **thin bar** (mini settings panel, Settings → General → "When closed"). Only a thin
-  line stays at the top of the screen, tinted by what the focused session is doing (blue: working, purple: thinking,
+- **Added**: the closed island can be a **thin bar** (mini settings panel, Settings → General → "When closed"). Only a wide, rounded
+  line floating a little below the top edge stays (like the iPad's home indicator), tinted by what the focused session is doing (blue: working, purple: thinking,
   orange: waiting for you, red: error, green: done).
 
 ## [1.1.0] — island size and hover options

@@ -54,7 +54,7 @@ export const PANEL_H = 520;
 // No notch on a PC: these are the hidden/compact sizes from docs/SPEC.md.
 export const NOTCH_W = 184;
 export const NOTCH_H = 32;
-export const BAR_W = 120; // the closed island as a thin bar
+export const BAR_W = 300; // the closed island as a thin bar, wide like the iPad's home indicator
 export const BAR_H = 5;
 export const COMPACT_W = 328; // NOTCH_W + 144: room for the plan limits in the middle
 export const EXPANDED_W = 640;
@@ -90,7 +90,7 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   upload: { height: 176, botX: 140, botY: 104, botDiameter: 62, agentMode: "column" },
   prompt: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },
   note: { height: 160, botX: 60, botY: null, botDiameter: 50, agentMode: "column" },
-  settings: { height: 268, botX: 54, botY: 84, botDiameter: 46, agentMode: "none" },
+  settings: { height: 318, botX: 54, botY: 84, botDiameter: 46, agentMode: "none" },
   greeting: { height: 150, botX: 320, botY: 90, botDiameter: 0, agentMode: "none" },
 };
 
