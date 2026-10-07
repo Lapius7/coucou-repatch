@@ -5,7 +5,10 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
-## [Unreleased]
+## [1.1.0] — island size and hover options
+
+- **Added**: the **size of the island** can be changed (80 % – 150 %), from the mini settings panel or Settings → General.
+  It suits small screens and high-resolution monitors.
 
 - **Added**: what the hover on the plan numbers shows can be changed in Settings → General → "On hover". The account
   e-mail can be shown, partly hidden or left out; the Windows / WSL name, the plan name, the 5-hour and weekly limits,

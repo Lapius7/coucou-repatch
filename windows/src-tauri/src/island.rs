@@ -5,7 +5,7 @@
 // centre of the main display inside a borderless, transparent, always-on-top
 // window that never takes focus.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 
@@ -149,6 +149,24 @@ pub fn screen_info(app: &AppHandle, pref: &str) -> ScreenInfo {
     }
 }
 
+/// How large the island is drawn (the "island size" setting): the webview is zoomed by this and the
+/// window is made this much bigger, so the page still sees the same 720×520 px and needs no change.
+static UI_ZOOM_BITS: AtomicU64 = AtomicU64::new(0x3FF0_0000_0000_0000); // 1.0
+
+pub fn zoom() -> f64 {
+    f64::from_bits(UI_ZOOM_BITS.load(Ordering::Relaxed))
+}
+
+/// Applies the island size and places the window again.
+pub fn set_zoom(app: &AppHandle, value: f64, pref: &str, collapsed: bool) {
+    let z = if value.is_finite() { value.clamp(0.8, 1.5) } else { 1.0 };
+    UI_ZOOM_BITS.store(z.to_bits(), Ordering::Relaxed);
+    if let Some(win) = window(app) {
+        let _ = win.set_zoom(z);
+    }
+    apply_geometry(app, pref, collapsed);
+}
+
 /// Places and sizes the window. `collapsed` picks the wake strip instead of the panel.
 pub fn apply_geometry(app: &AppHandle, pref: &str, collapsed: bool) {
     let (lw, lh) = if collapsed { (STRIP_W, STRIP_H) } else { (PANEL_W, PANEL_H) };
@@ -173,8 +191,9 @@ fn place(app: &AppHandle, pref: &str, lw: f64, lh: f64) {
     let mp = *m.position();
     let ms = *m.size();
 
-    let pw = (lw * scale).round().max(1.0) as u32;
-    let ph = (lh * scale).round().max(1.0) as u32;
+    let z = zoom();
+    let pw = (lw * z * scale).round().max(1.0) as u32;
+    let ph = (lh * z * scale).round().max(1.0) as u32;
     let x = mp.x + (ms.width as i32 - pw as i32) / 2;
     let y = mp.y;
 
@@ -285,7 +304,8 @@ pub fn spawn_drag_watch(app: AppHandle, gate: Arc<PollGate>) {
             // centimetres of screen), measured from where the strip is while it is closed
             // and from the panel's centre while it is widened.
             let centre = origin.x as f64 + size.width as f64 / 2.0;
-            let near = (cx - centre).abs() <= 190.0 * scale && cy >= origin.y as f64 && cy <= origin.y as f64 + 90.0 * scale;
+            let z = zoom();
+            let near = (cx - centre).abs() <= 190.0 * scale * z && cy >= origin.y as f64 && cy <= origin.y as f64 + 90.0 * scale * z;
             let pref = app.state::<crate::Shared>().settings.lock().map(|s| s.screen.clone()).unwrap_or_default();
             if !widened && down && dragged && near {
                 widened = true;
@@ -342,10 +362,12 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
                 let Ok(origin) = win.outer_position() else { continue };
                 let scale = win.scale_factor().unwrap_or(1.0);
                 let Some((cx, cy)) = cursor_physical() else { continue };
-                let x = (cx - origin.x as f64) / scale;
-                let y = (cy - origin.y as f64) / scale;
+                // In the page's own pixels: the island size (zoom) is taken out.
+                let z = zoom();
+                let x = (cx - origin.x as f64) / scale / z;
+                let y = (cy - origin.y as f64) / scale / z;
                 let size = match win.inner_size() {
-                    Ok(s) => (s.width as f64 / scale, s.height as f64 / scale),
+                    Ok(s) => (s.width as f64 / scale / z, s.height as f64 / scale / z),
                     Err(_) => (PANEL_W, PANEL_H),
                 };
                 if (x - last.0).abs() < 1.0 && (y - last.1).abs() < 1.0 {
@@ -419,17 +441,18 @@ pub fn refresh_click_through(app: &AppHandle, gate: &PollGate) {
         // The wake strip itself, never "the whole window": if the window ever
         // fails to shrink to the strip, the rest of it must not swallow clicks
         // meant for whatever sits under the top of the screen.
-        Some((0.0, 0.0, STRIP_W, STRIP_H))
+        Some((0.0, 0.0, STRIP_W * zoom(), STRIP_H * zoom()))
     } else {
         let r = *gate.rect.lock().unwrap();
         if r.w <= 0.0 {
             // Nothing drawn yet: nothing takes the mouse.
             Some((0.0, 0.0, 0.0, 0.0))
         } else {
-            let x0 = (r.x - HIT_MARGIN).max(0.0);
-            let y0 = (r.y - HIT_MARGIN).max(0.0);
-            let x1 = r.x + r.w + HIT_MARGIN;
-            let y1 = r.y + r.h + HIT_MARGIN;
+            let z = zoom();
+            let x0 = ((r.x - HIT_MARGIN) * z).max(0.0);
+            let y0 = ((r.y - HIT_MARGIN) * z).max(0.0);
+            let x1 = (r.x + r.w + HIT_MARGIN) * z;
+            let y1 = (r.y + r.h + HIT_MARGIN) * z;
             Some((x0, y0, x1 - x0, y1 - y0))
         }
     };

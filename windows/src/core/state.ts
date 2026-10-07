@@ -181,6 +181,8 @@ export interface Settings {
   planSource: string;
   /** "auto" (follow Windows) or a language code from core/i18n.ts. */
   language: string;
+  /** How large the island is drawn (0.8 – 1.5). */
+  uiScale: number;
   /** What the hover on the plan numbers shows. */
   tipEmail: "full" | "masked" | "hidden";
   tipSource: boolean;
@@ -233,6 +235,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveDiff: false,
   planSource: "auto",
   language: "auto",
+  uiScale: 1,
   tipEmail: "full",
   tipSource: true,
   tipPlan: true,

@@ -305,6 +305,21 @@ function apiSection(hasKey: boolean): HTMLElement {
 
 // ── General section ───────────────────────────────────────────────────────────
 
+/** How large the island is drawn. */
+function scaleSelect(): HTMLElement {
+  const select = h("select", {}) as HTMLSelectElement;
+  for (const pct of [80, 85, 90, 100, 110, 120, 130, 140, 150]) select.append(h("option", { value: String(pct / 100), text: `${pct}%` }));
+  if (!Array.from(select.options).some((o) => o.value === String(settings.uiScale))) {
+    select.append(h("option", { value: String(settings.uiScale), text: `${Math.round(settings.uiScale * 100)}%` }));
+  }
+  select.value = String(settings.uiScale);
+  select.addEventListener("change", () => {
+    settings.uiScale = Number(select.value);
+    void save();
+  });
+  return select;
+}
+
 /** The hover on the plan numbers: which lines to show, with a preview of the result. */
 function tipBlock(): HTMLElement {
   const preview = h("pre", { class: "tip-preview" });
@@ -510,6 +525,10 @@ function generalSection(): HTMLElement {
     h("div", { class: "row" },
       h("label", { text: t("set.autostart") }),
       toggle(settings.autostart, (v) => { settings.autostart = v; void save(); }),
+    ),
+    h("div", { class: "row" },
+      h("label", { text: t("mini.scale") }),
+      scaleSelect(),
     ),
     h("div", { class: "row" },
       h("label", { text: t("mini.always") }),

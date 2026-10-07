@@ -44,6 +44,9 @@ pub struct Settings {
     /// "auto" (follow Windows), or a language code such as "en" or "ja".
     #[serde(default = "default_language")]
     pub language: String,
+    /// How large the island is drawn: 0.8 – 1.5 (1.0 = as designed).
+    #[serde(default = "default_ui_scale")]
+    pub ui_scale: f64,
     /// What the hover on the plan numbers shows: "full", "masked" or "hidden" for the e-mail, and
     /// which lines to keep.
     #[serde(default = "default_tip_email")]
@@ -67,6 +70,10 @@ pub struct Settings {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_ui_scale() -> f64 {
+    1.0
 }
 
 fn default_tip_email() -> String {
@@ -129,6 +136,7 @@ impl Default for Settings {
             plan_source: default_plan_source(),
             live_diff: false,
             language: default_language(),
+            ui_scale: default_ui_scale(),
             tip_email: default_tip_email(),
             tip_source: true,
             tip_plan: true,
@@ -185,6 +193,7 @@ mod tests {
         // What did not exist yet takes its default.
         assert!(s.always_show, "the notch stays on screen unless told otherwise");
         assert!(!s.setup_done);
+        assert_eq!(s.ui_scale, 1.0);
         assert_eq!(s.tip_email, "full");
         assert!(s.tip_source && s.tip_plan && s.tip_five && s.tip_week && s.tip_reset);
         assert!(!s.tip_updated);
