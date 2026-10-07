@@ -1080,6 +1080,9 @@ export class Island {
     this.miniGrid.style.opacity = showGrid ? "1" : "0";
     const hasPlan = paintPlan(this.planCompact, State.planView(), "compact");
     this.planCompact.style.opacity = showGrid && hasPlan ? "1" : "0";
+    // Invisible must also mean untouchable: left on, it sat over the middle of the open island and
+    // swallowed the mouse (the left part of the session rows did not even highlight).
+    this.planCompact.style.pointerEvents = showGrid && hasPlan ? "auto" : "none";
     if (showGrid) {
       // The VS Code pill is only a placeholder: it is not worth a face of its own.
       const others = State.otherTasks.filter((t) => t.id !== "integration_claude").slice(0, 4);
