@@ -5,7 +5,7 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
-## [Unreleased]
+## [1.0.1] — fixes and clean-up
 
 - **Fixed**: in Settings → Connections, the switches of a WSL distro that had been stopped showed as off after it started.
 - **Changed**: plan limits are fetched with `/usage` every 30 minutes instead of 10 (while Claude Code is in use they

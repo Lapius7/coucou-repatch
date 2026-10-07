@@ -118,6 +118,7 @@ Changes version by version are in [CHANGELOG.en.md](CHANGELOG.en.md).
   surroundings and the island react; anywhere else a file can still be dropped on the app underneath. In the
   question screen a click removes a file; a picture gets a larger **preview** (its name small over it) that opens
   **large on a click** and goes away with the × or when **dragged sideways**.
+- **Always show the notch**: the small closed notch does not hide itself after a while (switch it off in the settings).
 - **Pin** (top right of the header): while pinned the island does not close by itself — not when the mouse leaves,
   not by the finished card's timer, not with Esc or a pull up. Press it again to let go.
 - **Long text**: when the first line of the finished card is long, the island grows taller to fit it (up to four lines).
