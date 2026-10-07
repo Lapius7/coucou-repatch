@@ -179,6 +179,7 @@ export class Island {
         Object.assign(State.settings, patch);
         if (patch.autoCloseInterval !== undefined) this.fsm.homeToPetitDelay = patch.autoCloseInterval;
         if (patch.alwaysShow !== undefined) this.fsm.keepVisible = patch.alwaysShow;
+        if (patch.closedStyle !== undefined) this.animateGeometry(false);
         void Bridge.saveSettings(State.settings);
         State.notify();
       },
@@ -523,7 +524,7 @@ export class Island {
   // ── Geometry ────────────────────────────────────────────────────────────────
 
   private targetSize(): { w: number; h: number; r: number } {
-    const { w, h } = islandSize(State.mode, State.view, State.chatHistory.length, State.enlarged, State.view === "prompt" ? State.promptExtra : State.finishedExtra);
+    const { w, h } = islandSize(State.mode, State.view, State.chatHistory.length, State.enlarged, State.view === "prompt" ? State.promptExtra : State.finishedExtra, State.settings.closedStyle === "bar");
     const r = State.mode === "expanded" ? EXPANDED_CORNER : ROUNDED_CORNER;
     return { w, h, r };
   }
@@ -1013,6 +1014,11 @@ export class Island {
         void Bridge.focusWindow(false);
       }
     }
+
+    // Closed as a thin bar: only the bar, tinted by what the focused session is doing.
+    const asBar = State.mode === "compact" && State.settings.closedStyle === "bar";
+    this.islandEl.classList.toggle("bar", asBar);
+    this.islandEl.dataset.state = State.focusTask?.state ?? "idle";
 
     // Compact mini grid
     const showGrid = State.mode === "compact";

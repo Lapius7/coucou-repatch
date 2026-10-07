@@ -305,6 +305,18 @@ function apiSection(hasKey: boolean): HTMLElement {
 
 // ── General section ───────────────────────────────────────────────────────────
 
+/** The closed island: the small notch, or a thin bar. */
+function closedSelect(): HTMLElement {
+  const select = h("select", {}) as HTMLSelectElement;
+  for (const v of ["notch", "bar"] as const) select.append(h("option", { value: v, text: t(`mini.closed.${v}`) }));
+  select.value = settings.closedStyle;
+  select.addEventListener("change", () => {
+    settings.closedStyle = select.value as Settings["closedStyle"];
+    void save();
+  });
+  return select;
+}
+
 /** How large the island is drawn. */
 function scaleSelect(): HTMLElement {
   const select = h("select", {}) as HTMLSelectElement;
@@ -525,6 +537,10 @@ function generalSection(): HTMLElement {
     h("div", { class: "row" },
       h("label", { text: t("set.autostart") }),
       toggle(settings.autostart, (v) => { settings.autostart = v; void save(); }),
+    ),
+    h("div", { class: "row" },
+      h("label", { text: t("mini.closed") }),
+      closedSelect(),
     ),
     h("div", { class: "row" },
       h("label", { text: t("mini.scale") }),

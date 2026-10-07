@@ -24,9 +24,19 @@ pub const STRIP_H: f64 = 6.0;
 
 pub const WINDOW_LABEL: &str = "island";
 
-/// Margin around the island that still counts as "on the island", in logical px.
-/// Wider than the macOS 6 pt because a click must never be swallowed.
-const HIT_MARGIN: f64 = 14.0;
+/// Margin around the island that still counts as "on the island", in logical px. It is what makes
+/// the island take the mouse a moment before the pointer reaches a button, but it also swallows
+/// clicks meant for the window underneath: so it is small around the closed notch, smaller than
+/// the open island's, and a little roomier only for the thin bar (a tiny target).
+fn hit_margin(island_height: f64) -> f64 {
+    if island_height < 12.0 {
+        8.0
+    } else if island_height < 60.0 {
+        3.0
+    } else {
+        8.0
+    }
+}
 
 #[derive(Serialize, Clone)]
 pub struct CursorPayload {
@@ -379,11 +389,12 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
                 // shape. A small entry margin means the flag is already off by the
                 // time a moving cursor reaches a button.
                 let r = *gate.rect.lock().unwrap();
+                let margin = hit_margin(r.h);
                 let on_island = r.w > 0.0
-                    && x >= r.x - HIT_MARGIN
-                    && x <= r.x + r.w + HIT_MARGIN
-                    && y >= r.y - HIT_MARGIN
-                    && y <= r.y + r.h + HIT_MARGIN;
+                    && x >= r.x - margin
+                    && x <= r.x + r.w + margin
+                    && y >= r.y - margin
+                    && y <= r.y + r.h + margin;
 
                 // A file being dragged has to be able to find us. WS_EX_TRANSPARENT
                 // — what click-through is on Windows — hides the window from
@@ -449,10 +460,11 @@ pub fn refresh_click_through(app: &AppHandle, gate: &PollGate) {
             Some((0.0, 0.0, 0.0, 0.0))
         } else {
             let z = zoom();
-            let x0 = ((r.x - HIT_MARGIN) * z).max(0.0);
-            let y0 = ((r.y - HIT_MARGIN) * z).max(0.0);
-            let x1 = (r.x + r.w + HIT_MARGIN) * z;
-            let y1 = (r.y + r.h + HIT_MARGIN) * z;
+            let m = hit_margin(r.h);
+            let x0 = ((r.x - m) * z).max(0.0);
+            let y0 = ((r.y - m) * z).max(0.0);
+            let x1 = (r.x + r.w + m) * z;
+            let y1 = (r.y + r.h + m) * z;
             Some((x0, y0, x1 - x0, y1 - y0))
         }
     };
@@ -462,5 +474,25 @@ pub fn refresh_click_through(app: &AppHandle, gate: &PollGate) {
 pub fn set_ignore_cursor(app: &AppHandle, ignore: bool) {
     if let Some(win) = window(app) {
         let _ = win.set_ignore_cursor_events(ignore);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_margin_around_the_island_is_small_for_the_closed_notch() {
+        // The thin bar is a tiny target: a little roomier. The closed notch must not swallow the
+        // clicks around it. The open island keeps a margin so its buttons wake up in time.
+        assert_eq!(hit_margin(5.0), 8.0);
+        assert_eq!(hit_margin(32.0), 3.0);
+        assert_eq!(hit_margin(160.0), 8.0);
+        assert_eq!(hit_margin(480.0), 8.0);
+    }
+
+    #[test]
+    fn the_island_size_starts_at_one() {
+        assert_eq!(zoom(), 1.0);
     }
 }

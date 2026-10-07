@@ -5,6 +5,14 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
+## [Unreleased]
+
+- **Fixed**: around the closed notch (a few dozen pixels) clicks were swallowed, so the window underneath could not be
+  touched. The margin of the hit area went from 14 px to 3 px.
+- **Added**: the closed island can be a **thin bar** (mini settings panel, Settings → General → "When closed"). Only a thin
+  line stays at the top of the screen, tinted by what the focused session is doing (blue: working, purple: thinking,
+  orange: waiting for you, red: error, green: done).
+
 ## [1.1.0] — island size and hover options
 
 - **Added**: the **size of the island** can be changed (80 % – 150 %), from the mini settings panel or Settings → General.

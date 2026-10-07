@@ -2229,3 +2229,49 @@ input[type="range"]::-webkit-slider-thumb {
 .chip.thumb-big .chip-x:hover {
   background: rgba(244, 80, 94, 0.9);
 }
+
+/* Closed as a thin bar: nothing but the bar, tinted by the focused session's state */
+#island.bar #plan-compact,
+#island.bar #mini-grid,
+#island.bar #bot-canvas,
+#island.bar #bot-glow,
+#island.bar #countdown {
+  display: none !important;
+}
+
+#island.bar {
+  background: #202228;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+#island.bar[data-state="working"],
+#island.bar[data-state="searching"] {
+  background: #3b82f6;
+  animation: bar-pulse 1.6s ease-in-out infinite;
+}
+
+#island.bar[data-state="thinking"] {
+  background: #8b5cf6;
+  animation: bar-pulse 1.6s ease-in-out infinite;
+}
+
+#island.bar[data-state="approval"],
+#island.bar[data-state="question"] {
+  background: #f59e0b;
+  animation: bar-pulse 0.9s ease-in-out infinite;
+}
+
+#island.bar[data-state="error"] {
+  background: #f4505e;
+}
+
+#island.bar[data-state="finished"] {
+  background: #22c55e;
+}
+
+@keyframes bar-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}

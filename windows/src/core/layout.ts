@@ -54,6 +54,8 @@ export const PANEL_H = 520;
 // No notch on a PC: these are the hidden/compact sizes from docs/SPEC.md.
 export const NOTCH_W = 184;
 export const NOTCH_H = 32;
+export const BAR_W = 120; // the closed island as a thin bar
+export const BAR_H = 5;
 export const COMPACT_W = 328; // NOTCH_W + 144: room for the plan limits in the middle
 export const EXPANDED_W = 640;
 /** A view pulled larger: one fixed size, inside the 720×520 window. */
@@ -108,6 +110,8 @@ export function islandSize(
   enlarged = false,
   /** Extra height: a long text on the finished card, a picture on the chat. */
   extra = 0,
+  /** The closed island is a thin bar instead of the small notch. */
+  bar = false,
 ): { w: number; h: number } {
   switch (mode) {
     case "hidden":
@@ -115,7 +119,7 @@ export function islandSize(
       // slides into the top edge of the screen instead of sitting there as a bar.
       return { w: NOTCH_W, h: 0 };
     case "compact":
-      return { w: COMPACT_W, h: NOTCH_H };
+      return bar ? { w: BAR_W, h: BAR_H } : { w: COMPACT_W, h: NOTCH_H };
     case "expanded": {
       if (enlarged && canEnlarge(view)) return { w: ENLARGED_W, h: ENLARGED_H };
       const h = view === "prompt" ? chatPromptHeight(chatCount) + extra : VIEW_LAYOUTS[view].height + (view === "finished" ? extra : 0);

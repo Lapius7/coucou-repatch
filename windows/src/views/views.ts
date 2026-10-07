@@ -967,6 +967,7 @@ function buildSettings(actions: ViewActions): ViewHost {
     ])),
     row(t("mini.screen"), seg("screen", [["primary", t("mini.main")], ["cursor", t("mini.cursor")]])),
     row(t("mini.always"), flag("alwaysShow")),
+    row(t("mini.closed"), seg("closedStyle", [["notch", t("mini.closed.notch")], ["bar", t("mini.closed.bar")]])),
     row(t("mini.scale"), seg("uiScale", [[0.85, "85%"], [1, "100%"], [1.15, "115%"], [1.3, "130%"]])),
   );
   const right = h("div", { class: "mini-col" },

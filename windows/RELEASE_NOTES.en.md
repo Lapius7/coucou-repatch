@@ -121,6 +121,7 @@ Changes version by version are in [CHANGELOG.en.md](CHANGELOG.en.md).
   surroundings and the island react; anywhere else a file can still be dropped on the app underneath. In the
   question screen a click removes a file; a picture gets a larger **preview** (its name small over it) that opens
   **large on a click** and goes away with the × or when **dragged sideways**.
+- **Closed shape**: instead of the small notch, only a **thin bar** at the top of the screen; its colour shows what the session is doing.
 - **Island size**: 80 % – 150 % (mini settings panel, Settings → General).
 - **Always show the notch**: the small closed notch does not hide itself after a while (switch it off in the settings).
 - **Pin** (top right of the header): while pinned the island does not close by itself — not when the mouse leaves,

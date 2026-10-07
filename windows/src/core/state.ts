@@ -181,6 +181,8 @@ export interface Settings {
   planSource: string;
   /** "auto" (follow Windows) or a language code from core/i18n.ts. */
   language: string;
+  /** How the closed island looks: the small notch, or a thin bar. */
+  closedStyle: "notch" | "bar";
   /** How large the island is drawn (0.8 – 1.5). */
   uiScale: number;
   /** What the hover on the plan numbers shows. */
@@ -235,6 +237,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveDiff: false,
   planSource: "auto",
   language: "auto",
+  closedStyle: "notch",
   uiScale: 1,
   tipEmail: "full",
   tipSource: true,
