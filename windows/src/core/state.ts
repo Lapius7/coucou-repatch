@@ -162,6 +162,8 @@ export interface Settings {
   absenceInterval: number;
   screen: "primary" | "cursor";
   autostart: boolean;
+  /** The small closed island stays on screen instead of hiding itself after a while. */
+  alwaysShow: boolean;
   hooksInstalled: boolean;
   /** Claude model used by the chat. */
   model: string;
@@ -213,6 +215,7 @@ export const DEFAULT_SETTINGS: Settings = {
   absenceInterval: 180,
   screen: "primary",
   autostart: false,
+  alwaysShow: true,
   hooksInstalled: false,
   model: "claude-opus-5",
   doneAutoClose: 6,

@@ -929,7 +929,7 @@ function buildSettings(actions: ViewActions): ViewHost {
   }
 
   /** A switch for a yes/no setting. */
-  function flag(key: "liveDiff" | "showPlanUsage" | "autostart" | "soundEnabled", onToggle?: () => void): HTMLElement {
+  function flag(key: "liveDiff" | "showPlanUsage" | "autostart" | "soundEnabled" | "alwaysShow", onToggle?: () => void): HTMLElement {
     const sw = h("button", {
       class: "switch",
       onclick: () => (onToggle ? onToggle() : actions.setSettings({ [key]: !State.settings[key] } as Partial<S>)),
@@ -966,6 +966,7 @@ function buildSettings(actions: ViewActions): ViewHost {
       ["sound", t("mini.n.sound")], ["toast", t("mini.n.toast")], ["both", t("mini.n.both")], ["none", t("mini.n.none")],
     ])),
     row(t("mini.screen"), seg("screen", [["primary", t("mini.main")], ["cursor", t("mini.cursor")]])),
+    row(t("mini.always"), flag("alwaysShow")),
   );
   const right = h("div", { class: "mini-col" },
     h("div", { class: "mini-head", text: t("set.autoClose") }),

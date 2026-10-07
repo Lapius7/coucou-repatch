@@ -181,6 +181,7 @@ export class Island {
       setSettings: (patch) => {
         Object.assign(State.settings, patch);
         if (patch.autoCloseInterval !== undefined) this.fsm.homeToPetitDelay = patch.autoCloseInterval;
+        if (patch.alwaysShow !== undefined) this.fsm.keepVisible = patch.alwaysShow;
         void Bridge.saveSettings(State.settings);
         State.notify();
       },
@@ -253,6 +254,7 @@ export class Island {
 
   private wireFsm() {
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
+    this.fsm.keepVisible = State.settings.alwaysShow;
     this.fsm.onTransition = (from, to) => {
       switch (to) {
         case "hidden":
@@ -1073,6 +1075,7 @@ export class Island {
     Sound.setEnabled(State.settings.soundEnabled);
     Sound.setVolume(State.settings.soundVolume);
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
+    this.fsm.keepVisible = State.settings.alwaysShow;
     State.notify();
   }
 

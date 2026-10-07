@@ -450,6 +450,10 @@ function generalSection(): HTMLElement {
       h("label", { text: t("set.autostart") }),
       toggle(settings.autostart, (v) => { settings.autostart = v; void save(); }),
     ),
+    h("div", { class: "row" },
+      h("label", { text: t("mini.always") }),
+      toggle(settings.alwaysShow, (v) => { settings.alwaysShow = v; void save(); }),
+    ),
   );
 }
 

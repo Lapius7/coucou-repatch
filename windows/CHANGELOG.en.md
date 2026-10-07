@@ -5,6 +5,11 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
+## [Unreleased]
+
+- **Fixed**: the small notch vanished from the screen after a while without use. It now **stays on screen**
+  (the setting "Always show the notch" brings back the old hiding behaviour).
+
 ## [1.0.0] — first release
 
 The first published version of this fork of [Louis-CFM/coucou](https://github.com/Louis-CFM/coucou), starting from its

@@ -15,6 +15,9 @@ pub struct Settings {
     /// "primary" = the main display, "cursor" = whichever display the mouse is on.
     pub screen: String,
     pub autostart: bool,
+    /// The closed island (the small notch) stays on screen; it does not hide itself after a while.
+    #[serde(default = "default_true")]
+    pub always_show: bool,
     pub hooks_installed: bool,
     /// Claude model used by the chat. Changeable in the settings window.
     /// Defaulted explicitly so a settings.json written by an older build still loads.
@@ -96,6 +99,7 @@ impl Default for Settings {
             absence_interval: 180.0,
             screen: "primary".into(),
             autostart: false,
+            always_show: true,
             hooks_installed: false,
             model: default_model(),
             done_auto_close: default_done_auto_close(),
