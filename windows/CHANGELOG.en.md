@@ -5,7 +5,7 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
-## [Unreleased]
+## [1.2.0] — the thin bar and more settings
 
 - **Added**: a "More settings" section in the settings window:
   - lines around a change in the diff (0–10), entries kept in the history, how often plan limits are fetched (never / 10 / 30 / 60 min)
