@@ -6,7 +6,7 @@ describe("islandSize", () => {
     expect(islandSize("compact", "overview")).toEqual({ w: COMPACT_W, h: NOTCH_H });
     expect(islandSize("compact", "overview", 0, false, 0, true)).toEqual({ w: BAR_W, h: BAR_H });
     expect(BAR_H).toBeLessThan(NOTCH_H);
-    expect(BAR_W).toBeLessThan(COMPACT_W);
+    expect(BAR_W).toBeGreaterThan(COMPACT_W); // a wide line, wider than the notch
   });
 
   it("a hidden island has no height", () => {

@@ -4,12 +4,13 @@
 import { Tracked, Spring, clamp } from "../core/anim";
 import { Bridge, IS_TAURI, onDragDrop } from "../core/bridge";
 import {
-  EXPANDED_CORNER, EXPANDED_W, NOTCH_W, PANEL_H, PANEL_W,
+  BAR_W, EXPANDED_CORNER, EXPANDED_W, NOTCH_W, PANEL_H, PANEL_W,
   ROUNDED_CORNER, VIEW_LAYOUTS, botGlowColor, botGlowOpacity, botPosition, chatPromptHeight,
   islandSize,
   canEnlarge,
   type IslandMode, type IslandViewName,
 } from "../core/layout";
+import { barGradient, barPalette } from "./barcolor";
 import { paintPlan } from "../core/plan";
 import { addRule } from "../core/rules";
 import { Sound } from "../core/sound";
@@ -76,6 +77,9 @@ export class Island {
   private wasInIsland = false;
   /** Last shape handed to Rust for the click-through test. */
   private pushedRect = { x: -1, y: -1, w: -1, h: -1 };
+  /** The island is drawn as the thin bar (only once it has shrunk to it, not while it closes). */
+  private barOn = false;
+  private barKey = "";
   private homeCollapseAt: number | null = null;
 
   // Bot hover → love (IslandWindowController.botHoverIn)
@@ -551,6 +555,13 @@ export class Island {
     this.islandEl.style.height = `${hh}px`;
     this.islandEl.style.borderRadius = `0 0 ${r}px ${r}px`;
     this.islandEl.style.transform = `translateX(-50%)`;
+    // The bar look comes only when the island has really shrunk to the bar: until then it is the
+    // black island getting smaller, and it turns into the glowing bar at the end (no jump).
+    const barNow = State.mode === "compact" && State.settings.closedStyle === "bar" && hh < 14 && w < BAR_W + 80;
+    if (barNow !== this.barOn) {
+      this.barOn = barNow;
+      this.islandEl.classList.toggle("bar", barNow);
+    }
     // These follow the island as it resizes, so they belong here rather than in
     // the state-driven DOM sync.
     this.miniGrid.style.left = `${w - 40 - 14.5}px`;
@@ -1016,9 +1027,17 @@ export class Island {
     }
 
     // Closed as a thin bar: only the bar, tinted by what the focused session is doing.
-    const asBar = State.mode === "compact" && State.settings.closedStyle === "bar";
-    this.islandEl.classList.toggle("bar", asBar);
-    this.islandEl.dataset.state = State.focusTask?.state ?? "idle";
+    // The colours of the bar: the sessions that are working, or what the focused one is doing.
+    if (State.settings.closedStyle === "bar") {
+      const palette = barPalette(State.tasks, State.focusTask?.state ?? "idle");
+      const key = `${palette.stops.join(",")}|${palette.speed}`;
+      if (key !== this.barKey) {
+        this.barKey = key;
+        this.islandEl.style.setProperty("--bar-grad", barGradient(palette));
+        this.islandEl.style.setProperty("--bar-speed", `${palette.speed}s`);
+        this.islandEl.style.setProperty("--bar-glow", palette.glow);
+      }
+    }
 
     // Compact mini grid
     const showGrid = State.mode === "compact";

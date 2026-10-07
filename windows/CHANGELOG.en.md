@@ -10,7 +10,8 @@ What changed in each published version. The same text goes into the GitHub relea
 - **Fixed**: around the closed notch (a few dozen pixels) clicks were swallowed, so the window underneath could not be
   touched. The margin of the hit area went from 14 px to 3 px.
 - **Added**: the closed island can be a **thin bar** (mini settings panel, Settings → General → "When closed"). Only a wide, rounded
-  line floating a little below the top edge stays (like the iPad's home indicator), tinted by what the focused session is doing (blue: working, purple: thinking,
+  line floating a little below the top edge stays (like the iPad's home indicator), with a gradient that never stops flowing, made of **the colours of the AI sessions that are working**; orange when something waits for you, red on an error, green when done.
+  Everything above the bar (up to the top edge) and a margin to the sides reacts to a click, and when the island closes it turns into the bar only once it has shrunk to it (blue: working, purple: thinking,
   orange: waiting for you, red: error, green: done).
 
 ## [1.1.0] — island size and hover options

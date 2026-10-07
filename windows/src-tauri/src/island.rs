@@ -38,6 +38,21 @@ fn hit_margin(island_height: f64) -> f64 {
     }
 }
 
+/// The thin bar floats this far below the top edge (see `#island.bar` in style.css).
+const BAR_FLOAT: f64 = 7.0;
+
+/// What takes the mouse for an island at `r`: (left, top, right, bottom) in the page's pixels. The
+/// thin bar is the exception: it is a tiny target, so everything above it, up to the top edge of
+/// the screen, counts, and a good margin to the sides.
+fn hit_box(r: &IslandRect) -> (f64, f64, f64, f64) {
+    if r.h < 12.0 {
+        (r.x - 24.0, 0.0, r.x + r.w + 24.0, r.y + BAR_FLOAT + r.h + 10.0)
+    } else {
+        let m = hit_margin(r.h);
+        (r.x - m, r.y - m, r.x + r.w + m, r.y + r.h + m)
+    }
+}
+
 #[derive(Serialize, Clone)]
 pub struct CursorPayload {
     pub x: f64,
@@ -389,12 +404,8 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
                 // shape. A small entry margin means the flag is already off by the
                 // time a moving cursor reaches a button.
                 let r = *gate.rect.lock().unwrap();
-                let margin = hit_margin(r.h);
-                let on_island = r.w > 0.0
-                    && x >= r.x - margin
-                    && x <= r.x + r.w + margin
-                    && y >= r.y - margin
-                    && y <= r.y + r.h + margin;
+                let (hx0, hy0, hx1, hy1) = hit_box(&r);
+                let on_island = r.w > 0.0 && x >= hx0 && x <= hx1 && y >= hy0 && y <= hy1;
 
                 // A file being dragged has to be able to find us. WS_EX_TRANSPARENT
                 // — what click-through is on Windows — hides the window from
@@ -460,11 +471,11 @@ pub fn refresh_click_through(app: &AppHandle, gate: &PollGate) {
             Some((0.0, 0.0, 0.0, 0.0))
         } else {
             let z = zoom();
-            let m = hit_margin(r.h);
-            let x0 = ((r.x - m) * z).max(0.0);
-            let y0 = ((r.y - m) * z).max(0.0);
-            let x1 = (r.x + r.w + m) * z;
-            let y1 = (r.y + r.h + m) * z;
+            let (bx0, by0, bx1, by1) = hit_box(&r);
+            let x0 = (bx0 * z).max(0.0);
+            let y0 = (by0 * z).max(0.0);
+            let x1 = bx1 * z;
+            let y1 = by1 * z;
             Some((x0, y0, x1 - x0, y1 - y0))
         }
     };
@@ -489,6 +500,18 @@ mod tests {
         assert_eq!(hit_margin(32.0), 3.0);
         assert_eq!(hit_margin(160.0), 8.0);
         assert_eq!(hit_margin(480.0), 8.0);
+    }
+
+    #[test]
+    fn the_thin_bar_takes_everything_above_it() {
+        let bar = IslandRect { x: 100.0, y: 0.0, w: 520.0, h: 5.0 };
+        let (x0, y0, x1, y1) = hit_box(&bar);
+        assert_eq!(y0, 0.0, "up to the top edge of the screen");
+        assert!(y1 > BAR_FLOAT + 5.0, "and the bar itself, with a little under it");
+        assert!(x0 < 100.0 && x1 > 620.0, "a good margin to the sides");
+        // The open island: the plain margin.
+        let open = IslandRect { x: 10.0, y: 0.0, w: 700.0, h: 300.0 };
+        assert_eq!(hit_box(&open), (2.0, -8.0, 718.0, 308.0));
     }
 
     #[test]
