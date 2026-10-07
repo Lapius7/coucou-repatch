@@ -113,6 +113,37 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_picture_preview_is_only_for_pictures_in_the_inbox() {
+        let tmp = std::env::temp_dir().join(format!("coucou-preview-{}", std::process::id()));
+        std::fs::create_dir_all(&tmp).unwrap();
+        // The first bytes of a PNG: the content is not looked at, the name and the place are.
+        let picture = tmp.join("shot.png");
+        std::fs::write(&picture, [0x89, b'P', b'N', b'G', 13, 10, 26, 10]).unwrap();
+
+        // Anywhere but the inbox: refused (the page can ask for any path).
+        assert!(image_preview(picture.to_str().unwrap()).is_err());
+        assert!(image_preview("C:/Windows/win.ini").is_err());
+        assert!(image_preview("").is_err());
+
+        // The inbox copy: a data URL.
+        let copy = ingest(picture.to_str().unwrap()).unwrap();
+        let url = image_preview(&copy.path).unwrap();
+        assert!(url.starts_with("data:image/png;base64,"), "got: {}", &url[..url.len().min(40)]);
+
+        // In the inbox but not a picture: refused. A path that climbs out of it: refused.
+        let text = tmp.join("note.txt");
+        std::fs::write(&text, b"hello").unwrap();
+        let text_copy = ingest(text.to_str().unwrap()).unwrap();
+        assert!(image_preview(&text_copy.path).is_err());
+        let climbing = format!("{}/../../{}", inbox_dir().display(), "Coucou/coucou.log");
+        assert!(image_preview(&climbing).is_err());
+
+        let _ = std::fs::remove_file(&copy.path);
+        let _ = std::fs::remove_file(&text_copy.path);
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
     fn ingest_copies_and_never_overwrites() {
         let tmp = std::env::temp_dir().join(format!("coucou-test-{}", std::process::id()));
         std::fs::create_dir_all(&tmp).unwrap();

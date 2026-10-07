@@ -7,6 +7,11 @@ What changed in each published version. The same text goes into the GitHub relea
 
 ## [Unreleased]
 
+- **Fixed**: in Settings → Connections, the switches of a WSL distro that had been stopped showed as off after it started.
+- **Changed**: plan limits are fetched with `/usage` every 30 minutes instead of 10 (while Claude Code is in use they
+  update with every reply anyway).
+- **Cleaned up**: removed code that was no longer used (old hook commands, the swallowing animation screen…); added
+  automated tests (`npm test`, `cargo test --lib`).
 - **Fixed**: the small notch vanished from the screen after a while without use. It now **stays on screen**
   (the setting "Always show the notch" brings back the old hiding behaviour).
 

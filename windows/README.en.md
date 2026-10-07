@@ -184,6 +184,15 @@ The app icon and the tray icon are drawn in code, like Mochi itself:
 npm run icons          # regenerates src-tauri/icons from scripts/gen-icons.mjs
 ```
 
+### Tests
+
+```powershell
+cd windows
+npm test                          # front end: dangerous-command detection, diffs, plan limits, translations in step
+cd src-tauri; cargo test --lib    # Rust: connections, writing settings, the picture preview's limits…
+npx tsc --noEmit                  # type check
+```
+
 ### Developing (live reload)
 
 ```powershell

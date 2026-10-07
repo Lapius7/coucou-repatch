@@ -138,3 +138,37 @@ pub fn save(settings: &Settings) -> std::io::Result<()> {
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
     std::fs::write(settings_path(), json)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A settings.json written by an older build: no newer keys, and a key that no longer exists.
+    #[test]
+    fn an_old_settings_file_still_loads_and_gets_the_new_defaults() {
+        let old = r#"{
+            "soundEnabled": false, "soundVolume": 0.05, "autoCloseInterval": 20, "absenceInterval": 180,
+            "activeIntegrations": ["integration_github"], "screen": "cursor",
+            "autostart": true, "hooksInstalled": true
+        }"#;
+        let s: Settings = serde_json::from_str(old).expect("an old file must load");
+        assert!(!s.sound_enabled);
+        assert_eq!(s.screen, "cursor");
+        assert!(s.hooks_installed);
+        // What did not exist yet takes its default.
+        assert!(s.always_show, "the notch stays on screen unless told otherwise");
+        assert!(!s.setup_done);
+        assert!(!s.live_diff);
+        assert_eq!(s.language, "auto");
+        assert_eq!(s.notify_mode, "sound");
+        assert!(s.show_plan_usage);
+        assert_eq!(s.hotkeys.get("toggle").map(String::as_str), Some("Ctrl+Alt+J"));
+    }
+
+    #[test]
+    fn the_defaults_round_trip() {
+        let json = serde_json::to_string(&Settings::default()).unwrap();
+        let back: Settings = serde_json::from_str(&json).unwrap();
+        assert_eq!(serde_json::to_string(&back).unwrap(), json);
+    }
+}

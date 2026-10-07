@@ -185,6 +185,15 @@ npm run pack           # インストーラーを作り、windows/release/ に�
 npm run icons          # scripts/gen-icons.mjs から src-tauri/icons を作り直す
 ```
 
+### テスト
+
+```powershell
+cd windows
+npm test                          # 画面側 (危険コマンドの検出、差分、プランの上限、翻訳の対応)
+cd src-tauri; cargo test --lib    # Rust 側 (接続、設定の書き込み、画像プレビューの制限など)
+npx tsc --noEmit                  # 型チェック
+```
+
 ### 開発 (ライブ更新)
 
 ```powershell
