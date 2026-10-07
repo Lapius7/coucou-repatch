@@ -140,6 +140,7 @@ pub(crate) fn entry_is_ours(entry: &Value) -> bool {
 }
 
 /// Settings with Coucou's hooks added; everything else is left untouched.
+#[cfg(test)]
 fn merged(existing: &Value) -> Value {
     merged_with(existing, &hook_command)
 }
@@ -225,11 +226,6 @@ pub(crate) fn stamp() -> String {
     )
 }
 
-fn backup_path() -> PathBuf {
-    let p = settings_path();
-    p.with_file_name(format!("settings.json.bak-{}", stamp()))
-}
-
 /// Identifies the exact bytes a preview was computed from. FNV-1a is plenty:
 /// the question is only "is this still the file I showed the user?".
 pub(crate) fn fingerprint(bytes: &[u8]) -> String {
@@ -239,13 +235,6 @@ pub(crate) fn fingerprint(bytes: &[u8]) -> String {
         hash = hash.wrapping_mul(0x1000_0000_01b3);
     }
     format!("{hash:016x}")
-}
-
-fn current_fingerprint() -> String {
-    match std::fs::read(settings_path()) {
-        Ok(bytes) => fingerprint(&bytes),
-        Err(_) => fingerprint(b""),
-    }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -272,64 +261,31 @@ pub fn status() -> HookStatus {
     }
 }
 
-pub fn preview(install: bool) -> Result<HookPreview, String> {
-    let current = read_settings()?;
-    let next = if install { merged(&current) } else { without_ours(&current) };
-    Ok(HookPreview {
-        diff: unified_diff(&pretty(&current), &pretty(&next)),
-        backup: backup_path().to_string_lossy().to_string(),
-        settings_path: settings_path().to_string_lossy().to_string(),
-        fingerprint: current_fingerprint(),
-    })
-}
-
-/// Writes the merged (or cleaned) settings after taking a dated backup.
+/// Replaces `path` with `text` after a dated backup (`settings.json.bak-…` beside it, only when
+/// there was a file). Returns where the backup went.
 ///
-/// `fingerprint` is the one the preview was computed from. If the file changed
-/// in between — another tool, another window, the user's own editor — we stop
-/// and make them look at a fresh diff, because the only thing worse than not
-/// installing the hooks is silently reverting somebody else's edit.
-pub fn write(install: bool, fingerprint: &str) -> Result<String, String> {
-    let path = settings_path();
+/// A dotfiles setup often makes settings.json a symlink: the file it points at is written, so the
+/// link survives. The new content is written beside the target and renamed over it: a crash or a
+/// full disk leaves the original intact rather than half a file.
+pub(crate) fn replace_file(path: &Path, text: &str) -> Result<PathBuf, String> {
     let dir = path.parent().unwrap_or(Path::new("."));
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-
-    // Read before the backup: an unreadable file must abort before we touch
-    // anything at all.
-    let current = read_settings()?;
-    if current_fingerprint() != fingerprint {
-        return Err(format!(
-            "{} changed since the preview. Nothing was written — review the new diff.",
-            path.display()
-        ));
-    }
-
-    let backup = backup_path();
+    let backup = path.with_file_name(format!("settings.json.bak-{}", stamp()));
     if path.exists() {
-        std::fs::copy(&path, &backup).map_err(|e| format!("backup failed: {e}"))?;
+        std::fs::copy(path, &backup).map_err(|e| format!("backup failed: {e}"))?;
     }
-
-    let next = if install { merged(&current) } else { without_ours(&current) };
-    let mut text = pretty(&next);
-    text.push('\n');
-
-    // A dotfiles setup often makes settings.json a symlink: write to the file it
-    // points at, so the link survives the rename below.
     #[cfg(unix)]
-    let path = std::fs::canonicalize(&path).unwrap_or(path);
-
-    // Write beside the target and rename over it: a crash or a full disk leaves
-    // the original settings.json intact rather than half a file.
+    let path = &std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
     let temp = path.with_extension(format!("json.coucou-{}", std::process::id()));
-    if let Err(err) = write_like(&temp, &path, text.as_bytes()) {
+    if let Err(err) = write_like(&temp, path, text.as_bytes()) {
         let _ = std::fs::remove_file(&temp);
         return Err(format!("write failed: {err}"));
     }
-    if let Err(err) = std::fs::rename(&temp, &path) {
+    if let Err(err) = std::fs::rename(&temp, path) {
         let _ = std::fs::remove_file(&temp);
         return Err(format!("write failed: {err}"));
     }
-    Ok(backup.to_string_lossy().to_string())
+    Ok(backup)
 }
 
 /// Writes `bytes` to `temp`, which is about to replace `original`.
@@ -643,57 +599,5 @@ mod tests {
         assert_eq!(mode(&temp), 0o600);
 
         let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    /// Everything filesystem-shaped lives in one test on purpose: it points
-    /// the home directory at a temp directory, and that is process-wide.
-    #[test]
-    fn writing_backs_up_preserves_and_refuses_a_changed_file() {
-        let tmp = std::env::temp_dir().join(format!("coucou-hooks-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(tmp.join(".claude")).unwrap();
-        std::env::set_var(platform::HOME_VAR, &tmp);
-
-        let path = settings_path();
-        assert!(path.starts_with(&tmp), "the test must not touch the real home");
-
-        // A real-shaped file, written the way PowerShell 5 would: UTF-8 with BOM.
-        let original = r#"{"model":"claude-opus-5","theme":"dark","tui":{"x":1},"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"other-tool.exe"}]}]}}"#;
-        let mut bytes = vec![0xEF, 0xBB, 0xBF];
-        bytes.extend_from_slice(original.as_bytes());
-        std::fs::write(&path, &bytes).unwrap();
-
-        // Install.
-        let plan = preview(true).expect("a BOM must not stop the preview");
-        assert!(plan.diff.contains("coucou-hook"), "the diff must show what changes");
-        let backup = write(true, &plan.fingerprint).expect("install should succeed");
-
-        // The backup holds the original bytes, BOM and all.
-        assert_eq!(std::fs::read(&backup).unwrap(), bytes);
-
-        // Everything else survived, and so did the other tool's hook.
-        let after: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
-        assert_eq!(after["model"], "claude-opus-5");
-        assert_eq!(after["theme"], "dark");
-        assert_eq!(after["tui"]["x"], 1);
-        let pre = after["hooks"]["PreToolUse"].as_array().unwrap();
-        assert!(pre.iter().any(|e| serde_json::to_string(e).unwrap().contains("other-tool.exe")));
-        assert!(status().installed);
-
-        // A file that moved since the preview is refused, and left alone.
-        let stale = preview(false).unwrap();
-        std::fs::write(&path, br#"{"model":"someone-else-edited-this"}"#).unwrap();
-        let err = write(false, &stale.fingerprint).unwrap_err();
-        assert!(err.contains("changed since the preview"), "got: {err}");
-        let untouched: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
-        assert_eq!(untouched["model"], "someone-else-edited-this");
-
-        // Content we cannot parse is refused before anything is written.
-        std::fs::write(&path, b"{ broken").unwrap();
-        assert!(preview(true).is_err());
-        assert!(write(true, "whatever").is_err());
-        assert_eq!(std::fs::read(&path).unwrap(), b"{ broken");
-
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 }

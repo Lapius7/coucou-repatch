@@ -283,12 +283,10 @@ class AppState {
   /** A full-screen game or video is in front: the island stays out of the way. */
   suppressed = false;
 
-  uploadProgress = 0;
   /** Extra height of the finished card, for a long first line. */
   finishedExtra = 0;
   /** Extra height of the chat for the preview of a dropped picture. */
   promptExtra = 0;
-  uploadDuration = 2.4;
   fileDragOver = false;
 
   promptContext: PromptContext | null = null;

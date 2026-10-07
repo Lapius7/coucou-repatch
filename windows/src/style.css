@@ -985,18 +985,6 @@ input[type="range"]::-webkit-slider-thumb {
     var(--card);
 }
 
-.up-row {
-  position: absolute;
-  left: 26px;
-  top: 36px;
-  width: 526px;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font: 400 12.5px var(--font);
-  color: #a9adb5;
-}
-
 .up-name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1012,34 +1000,6 @@ input[type="range"]::-webkit-slider-thumb {
   font-variant-numeric: tabular-nums;
   font-weight: 500;
   flex: 0 0 auto;
-}
-
-.up-track {
-  position: absolute;
-  left: 26px;
-  top: 58px;
-  width: 526px;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.up-fill {
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #1fa87a, #34d399);
-}
-
-.up-glow {
-  position: absolute;
-  left: 0;
-  top: -3px;
-  width: 28px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(110, 231, 183, 0.45);
-  filter: blur(5px);
-  pointer-events: none;
 }
 
 /* ── Integration cards (overview, left card) ────────────────────────────── */

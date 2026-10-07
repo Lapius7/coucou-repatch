@@ -262,28 +262,7 @@ fn fingerprint_of(raw: &Option<Vec<u8>>) -> String {
 fn write_settings(side: &Side, text: &str) -> Result<String, String> {
     let stamp = hooks::stamp();
     match &side.distro {
-        None => {
-            let path = hooks::settings_path();
-            let dir = path.parent().unwrap_or(Path::new("."));
-            std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-            let backup = path.with_file_name(format!("settings.json.bak-{stamp}"));
-            if path.exists() {
-                std::fs::copy(&path, &backup).map_err(|e| format!("backup failed: {e}"))?;
-            }
-            // A dotfiles setup often makes settings.json a symlink: write to its target.
-            #[cfg(unix)]
-            let path = std::fs::canonicalize(&path).unwrap_or(path);
-            let temp = path.with_extension(format!("json.coucou-{}", std::process::id()));
-            if let Err(e) = hooks::write_like(&temp, &path, text.as_bytes()) {
-                let _ = std::fs::remove_file(&temp);
-                return Err(format!("write failed: {e}"));
-            }
-            if let Err(e) = std::fs::rename(&temp, &path) {
-                let _ = std::fs::remove_file(&temp);
-                return Err(format!("write failed: {e}"));
-            }
-            Ok(backup.to_string_lossy().to_string())
-        }
+        None => Ok(hooks::replace_file(&hooks::settings_path(), text)?.to_string_lossy().to_string()),
         Some(distro) => {
             let backup = format!("~/.claude/settings.json.bak-{stamp}");
             let (ok, _) = wsl_run(
@@ -561,5 +540,57 @@ mod tests {
         let (on, _) = plan(&side, &json!({}), false, true, None);
         let (off, _) = plan(&side, &on, false, false, None);
         assert_eq!(off, json!({}));
+    }
+
+    /// Everything filesystem-shaped lives in one test on purpose: it points the home directory at a
+    /// temp directory, and that is process-wide.
+    #[test]
+    fn writing_backs_up_preserves_and_refuses_a_changed_file() {
+        let tmp = std::env::temp_dir().join(format!("coucou-connect-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(tmp.join(".claude")).unwrap();
+        std::env::set_var(platform::HOME_VAR, &tmp);
+
+        let path = hooks::settings_path();
+        assert!(path.starts_with(&tmp), "the test must not touch the real home");
+
+        // A real-shaped file, written the way PowerShell 5 would: UTF-8 with BOM.
+        let original = r#"{"model":"claude-opus-5","theme":"dark","tui":{"x":1},"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"other-tool.exe"}]}]}}"#;
+        let mut bytes = vec![0xEF, 0xBB, 0xBF];
+        bytes.extend_from_slice(original.as_bytes());
+        std::fs::write(&path, &bytes).unwrap();
+
+        // Connect the hooks.
+        let plan = preview("local", true, false).expect("a BOM must not stop the preview");
+        assert!(plan.diff.contains("coucou-hook"), "the diff must show what changes");
+        let backup = apply("local", true, false, &plan.fingerprint).expect("connecting should succeed");
+
+        // The backup holds the original bytes, BOM and all.
+        assert_eq!(std::fs::read(&backup).unwrap(), bytes);
+
+        // Everything else survived, and so did the other tool's hook.
+        let after: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(after["model"], "claude-opus-5");
+        assert_eq!(after["theme"], "dark");
+        assert_eq!(after["tui"]["x"], 1);
+        let pre = after["hooks"]["PreToolUse"].as_array().unwrap();
+        assert!(pre.iter().any(|e| serde_json::to_string(e).unwrap().contains("other-tool.exe")));
+        assert!(hooks::status().installed);
+
+        // A file that moved since the preview is refused, and left alone.
+        let stale = preview("local", false, false).unwrap();
+        std::fs::write(&path, br#"{"model":"someone-else-edited-this"}"#).unwrap();
+        let err = apply("local", false, false, &stale.fingerprint).unwrap_err();
+        assert!(err.contains("changed since the preview"), "got: {err}");
+        let untouched: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(untouched["model"], "someone-else-edited-this");
+
+        // Content we cannot parse is refused before anything is written.
+        std::fs::write(&path, b"{ broken").unwrap();
+        assert!(preview("local", true, false).is_err());
+        assert!(apply("local", true, false, "whatever").is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), b"{ broken");
+
+        let _ = std::fs::remove_dir_all(&tmp);
     }
 }

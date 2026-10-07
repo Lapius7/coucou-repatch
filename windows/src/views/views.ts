@@ -15,7 +15,7 @@ import { t } from "../core/i18n";
 import { washRGBA, type IslandViewName, type Wash } from "../core/layout";
 import { createMiniBot, pruneMiniBots } from "../mochi/minibots";
 import { buildPrompt } from "./chat";
-import { buildUpload, buildUploading } from "./upload";
+import { buildUpload } from "./upload";
 
 export interface ViewActions {
   setView(v: IslandViewName): void;
@@ -1003,18 +1003,6 @@ function buildSettings(actions: ViewActions): ViewHost {
   };
 }
 
-// ── Placeholders filled in later stages ───────────────────────────────────────
-
-function buildPlaceholder(title: string, sub: string): ViewHost {
-  const body = h(
-    "div",
-    { class: "stack", style: "padding:0 18px 0 118px" },
-    h("div", { class: "title", text: title }),
-    h("div", { class: "sub", text: sub }),
-  );
-  return { el: h("div", { class: "view" }, card(null, body)), sync() {} };
-}
-
 // ── Registry ──────────────────────────────────────────────────────────────────
 
 export function buildViews(
@@ -1036,10 +1024,5 @@ export function buildViews(
   map.set("settings", buildSettings(actions));
   map.set("prompt", buildPrompt(onChatHeightChange));
   map.set("upload", buildUpload());
-  map.set("uploading", buildUploading());
-  // Not in the Windows v1: sending a file by email, window attach + web result.
-  map.set("mail", buildPlaceholder("Sending by email isn't in this version.", ""));
-  map.set("searching", buildPlaceholder("Claude is searching…", ""));
-  map.set("result", buildPlaceholder("Result", ""));
   return map;
 }

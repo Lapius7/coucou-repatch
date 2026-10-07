@@ -121,7 +121,7 @@ async function main() {
     }
   };
   window.setTimeout(() => void probePlans(), 4000);
-  window.setInterval(() => void probePlans(), 10 * 60_000);
+  window.setInterval(() => void probePlans(), 30 * 60_000);
   startPlanClock(() => State.planView());
   // `npm run dev` in a plain browser: `__statusline({rate_limits: {five_hour: {...}, seven_day: {...}}, cwd: "/home/me"})`.
   if (!IS_TAURI) (window as unknown as { __statusline: (raw: unknown) => void }).__statusline = takePlan;

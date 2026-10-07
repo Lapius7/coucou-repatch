@@ -48,35 +48,3 @@ export function buildUpload(): ViewHost {
     },
   };
 }
-
-export function buildUploading(): ViewHost {
-  const label = h("span", { class: "up-name" });
-  const percent = h("span", { class: "up-pct" });
-  const fill = h("div", { class: "up-fill" });
-  const glow = h("div", { class: "up-glow" });
-  const card = h(
-    "div",
-    { class: "card up-card" },
-    h("div", { class: "up-row" }, label, percent),
-    h("div", { class: "up-track" }, fill, glow),
-  );
-  const el = h("div", { class: "view" }, card);
-
-  return {
-    el,
-    sync() {
-      const done = State.uploadProgress >= 0.999;
-      const pct = Math.round(State.uploadProgress * 100);
-      label.textContent = done
-        ? `✓  ${State.droppedFile?.name ?? "File"}`
-        : t("up.uploading", { name: State.droppedFile?.name ?? "file" });
-      label.classList.toggle("done", done);
-      percent.textContent = done ? "" : `${pct} %`;
-      const w = State.uploadProgress * 526;
-      fill.style.width = `${w}px`;
-      glow.style.transform = `translateX(${Math.max(0, w - 14)}px)`;
-      glow.style.opacity = State.uploadProgress > 0.01 ? "1" : "0";
-      card.classList.toggle("done", done);
-    },
-  };
-}

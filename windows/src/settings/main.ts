@@ -63,6 +63,8 @@ function connectSection(hookReady: boolean): HTMLElement {
   const want = new Map<string, { hooks: boolean; sl: boolean }>();
   let targets: ConnectTarget[] = [];
 
+  /** Targets whose switches were set from what was really read (not from a placeholder for a stopped distro). */
+  const initialised = new Set<string>();
   /** True while a diff is on screen: a refresh would pull it away. */
   let reviewing = false;
   let loading = false;
@@ -78,7 +80,10 @@ function connectSection(hookReady: boolean): HTMLElement {
     }
     targets = (await Bridge.connectTargets(wake)) ?? [];
     for (const target of targets) {
-      if (keep && want.has(target.id) && target.checked) continue;
+      // A distro that was stopped has no real state yet: its switches are set the first time it is read.
+      if (keep && initialised.has(target.id) && target.checked) continue;
+      if (target.checked) initialised.add(target.id);
+      else initialised.delete(target.id);
       // First run: everything that can be connected starts switched on.
       want.set(target.id, firstRun && target.claudeFound
         ? { hooks: true, sl: true }
