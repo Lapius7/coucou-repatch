@@ -32,6 +32,8 @@ function typingDots(): HTMLElement {
 }
 
 /** The coloured chip showing what the question is about (a dropped file). */
+const isPicture = (name: string) => /\.(png|jpe?g|gif|webp|bmp)$/i.test(name);
+
 function contextChip(label: string, path: string, setExtra: (px: number) => void, openLarge: (url: string) => void): HTMLElement {
   const dot = h("i", { class: "chip-dot" });
   const chip = h("div", { class: "chip", title: t("chat.removeFile") }, dot, h("span", { text: label }), h("b", { class: "chip-x", text: "×" }));
@@ -40,7 +42,7 @@ function contextChip(label: string, path: string, setExtra: (px: number) => void
   const locked = () => State.chatHistory.length > 0;
   const remove = () => {
     if (locked()) return;
-    State.droppedFile = null;
+    State.droppedFiles = State.droppedFiles.filter((f) => f.path !== path);
     State.promptContext = null;
     State.notify();
   };
@@ -50,7 +52,7 @@ function contextChip(label: string, path: string, setExtra: (px: number) => void
   });
   const PREVIEW_EXTRA = 60;
   // A picture gets a small preview in place of the colour dot.
-  if (/\.(png|jpe?g|gif|webp|bmp)$/i.test(label)) {
+  if (isPicture(label)) {
     void Bridge.imagePreview(path).then((url) => {
       if (!url) return;
       // The picture, larger, with the name small over its lower edge and a × over its corner.
@@ -116,6 +118,19 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     placeholder: t("chat.placeholder"),
     spellcheck: "false",
   }) as HTMLInputElement;
+  // A half-written question is kept (and comes back after a restart).
+  try {
+    input.value = localStorage.getItem("coucou.chatDraft") ?? "";
+  } catch {
+    // No storage: no draft.
+  }
+  input.addEventListener("input", () => {
+    try {
+      localStorage.setItem("coucou.chatDraft", input.value);
+    } catch {
+      // ignore
+    }
+  });
   const send = h("button", { class: "send-btn", title: t("chat.send") }, svg(ICONS.arrowUp, 11));
   const bar = h("div", { class: "chat-bar" }, input, send);
 
@@ -127,7 +142,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     lightbox.style.display = "none";
     clear(lightbox);
     island()?.classList.remove("lightbox-open");
-    State.promptExtra = State.droppedFile ? 60 : 0;
+    State.promptExtra = State.droppedFiles.some((f) => isPicture(f.name)) ? 60 : 0;
     onHeightChange();
   };
   lightbox.addEventListener("click", closeLarge);
@@ -165,6 +180,11 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     const query = input.value.trim();
     if (!query || sending) return;
     input.value = "";
+    try {
+      localStorage.removeItem("coucou.chatDraft");
+    } catch {
+      // ignore
+    }
     sending = true;
     Sound.play("send");
 
@@ -173,9 +193,13 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     State.notify();
     onHeightChange();
 
-    const file = State.droppedFile;
+    const files = State.droppedFiles;
     const context: ChatContext | null =
-      State.chatHistory.length === 1 && file ? { kind: "file", name: file.name, path: file.path } : null;
+      State.chatHistory.length === 1 && files.length > 0
+        ? files.length === 1
+          ? { kind: "file", name: files[0].name, path: files[0].path }
+          : { kind: "files", files: files.map((f) => ({ name: f.name, path: f.path })) }
+        : null;
 
     try {
       const reply = await Bridge.chatSend(query, context);
@@ -207,17 +231,15 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
   return {
     el,
     sync() {
-      const file = State.droppedFile;
       // After the first question the picture is part of the conversation: no × and no dragging it away.
-      const chipEl = chipRow.firstElementChild as HTMLElement | null;
-      if (chipEl) {
-        const sent = State.chatHistory.length > 0;
+      const sent = State.chatHistory.length > 0;
+      for (const chipEl of Array.from(chipRow.children) as HTMLElement[]) {
         chipEl.classList.toggle("locked", sent);
         // The "remove" hint only while it can be removed (a picture's title is empty anyway).
         if (sent) chipEl.title = "";
         else if (!chipEl.classList.contains("thumb-big")) chipEl.title = t("chat.removeFile");
       }
-      const wantChip = file ? `${file.name}|${file.path}` : "";
+      const wantChip = State.droppedFiles.map((f) => `${f.name}|${f.path}`).join("\n");
       if (chipRow.dataset.label !== wantChip) {
         chipRow.dataset.label = wantChip;
         clear(chipRow);
@@ -225,7 +247,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
           State.promptExtra = 0;
           onHeightChange();
         }
-        if (file) {
+        for (const file of State.droppedFiles) {
           chipRow.append(contextChip(file.name, file.path, (px) => {
             State.promptExtra = px;
             onHeightChange();

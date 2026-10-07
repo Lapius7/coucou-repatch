@@ -62,6 +62,9 @@ export const Bridge = {
   /** A small preview (data URL) of a dropped picture, or nothing. */
   imagePreview: (path: string) => call<string>("read_image_preview", { path }),
 
+  /** Is there a newer version on GitHub? Only asked when the user switched the check on. */
+  checkUpdate: () => callOrThrow<{ tag: string; url: string; newer: boolean }>("check_update"),
+
   /** Right-click menu of the island (the same entries as the tray icon). */
   contextMenu: () => call<void>("show_context_menu"),
   /** Grey tray icon while the island is switched off. */
@@ -123,6 +126,7 @@ export const Bridge = {
 
 export type ChatContext =
   | { kind: "file"; name: string; path: string }
+  | { kind: "files"; files: { name: string; path: string }[] }
   | { kind: "window"; appName: string; title: string; url?: string };
 
 export interface DroppedFile {

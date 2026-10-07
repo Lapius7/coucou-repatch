@@ -7,6 +7,7 @@ import { ICONS } from "./icons";
 import { Ticker } from "./ticker";
 import { State, formatDuration, type AgentTask, type AskQuestion } from "../core/state";
 import { todayLine } from "../core/usage";
+import { hardestWindow, resetClock, timeLeft } from "../core/plan";
 import { renderMarkdown } from "./markdown";
 import { pullGrip } from "./grip";
 import { fileBadge, highlightInto } from "./highlight";
@@ -497,10 +498,15 @@ function buildLog(actions: ViewActions): ViewHost {
         // Claude writes Markdown: draw it.
         const node = h("div", { class: "log-entry reply md" });
         node.append(renderMarkdown(entry.text));
+        node.append(copyButton(entry.text));
         list.append(node);
       } else {
         const text = entry.kind === "prompt" ? `› ${entry.text}` : entry.text;
-        list.append(h("div", { class: `log-entry ${entry.kind}`, text }));
+        // A command ("$ npm test") can be copied without its "$ "; so can what you asked.
+        const copyable = entry.kind === "prompt" ? entry.text : entry.text.startsWith("$ ") ? entry.text.slice(2) : "";
+        const node = h("div", { class: `log-entry ${entry.kind}` }, text);
+        if (copyable) node.append(copyButton(copyable));
+        list.append(node);
       }
     }
     if (following) toBottom();
@@ -538,6 +544,26 @@ function buildLog(actions: ViewActions): ViewHost {
       window.setTimeout(toBottom, 400);
     },
   };
+}
+
+/** A small button that copies `text` to the clipboard (it shows on hover, in the history). */
+function copyButton(text: string): HTMLElement {
+  const btn = h("button", { class: "log-copy", title: t("log.copy"), text: "⧉" });
+  btn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = "✓";
+      btn.title = t("log.copied");
+    } catch {
+      btn.textContent = "×";
+    }
+    window.setTimeout(() => {
+      btn.textContent = "⧉";
+      btn.title = t("log.copy");
+    }, 1400);
+  });
+  return btn;
 }
 
 // ── Diff (a file edit: the steps on the left, the changed code on the right) ──
@@ -840,7 +866,12 @@ function buildError(actions: ViewActions): ViewHost {
       who.append(agentWho(task, "Claude Code"));
       title.textContent = t("err.session");
       // One line of text whatever it contains (a prompt with line breaks used to stretch the card).
-      const why = (task?.lastError ?? task?.steps.at(-1) ?? t("err.noDetail")).replace(/\s+/g, " ").trim();
+      let why = (task?.lastError ?? task?.steps.at(-1) ?? t("err.noDetail")).replace(/\s+/g, " ").trim();
+      // A usage limit: say when it opens up again.
+      if (task?.lastErrorKind === "rate_limit") {
+        const hit = hardestWindow(State.planView()?.plan);
+        if (hit) why += ` — ${t("err.resetAt", { at: resetClock(hit.resetsAt), left: timeLeft(hit.resetsAt) })}`;
+      }
       detail.textContent = why;
       detail.title = why;
     },
@@ -867,6 +898,9 @@ function buildFinished(actions: ViewActions, onHeightChange: () => void): ViewHo
   );
   title.style.cursor = "pointer";
   title.addEventListener("click", () => actions.openLogLarge());
+  // The other sessions that finished a moment ago: a click shows their card.
+  const others = h("div", { class: "fin-others" });
+  row.append(others);
   const el = h("div", { class: "view" }, card("green", stack(116, 16, who, title, detail, row)));
   return {
     el,
@@ -878,6 +912,22 @@ function buildFinished(actions: ViewActions, onHeightChange: () => void): ViewHo
       clear(who);
       const took = State.focusTask?.lastDurationMs;
       who.append(agentWho(State.focusTask, took ? t("fin.finishedIn", { time: formatDuration(took) }) : t("fin.finished")));
+      // Other sessions that finished lately (not the one on screen).
+      clear(others);
+      const lately = State.recentDone
+        .filter((d) => d.id !== State.focusId && Date.now() - d.at < 120_000)
+        .map((d) => State.tasks.find((x) => x.id === d.id))
+        .filter((x): x is AgentTask => !!x && x.state === "finished");
+      if (lately.length > 0) {
+        others.append(h("span", { class: "fin-others-label", text: t("fin.others") }));
+        for (const other of lately.slice(0, 3)) {
+          others.append(h("button", {
+            class: "fin-other", title: other.name,
+            onclick: () => actions.setFocus(other.id),
+          }, h("i", { class: "fin-dot", style: `background:${other.color}` }), other.name));
+        }
+        if (lately.length > 3) others.append(h("span", { class: "fin-others-label", text: `+${lately.length - 3}` }));
+      }
       const text = State.focusTask?.steps.at(-1) ?? t("fin.session");
       title.textContent = text;
       detail.textContent = [State.focusTask?.summary, todayLine()].filter(Boolean).join("  ·  ");

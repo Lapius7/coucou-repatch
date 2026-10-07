@@ -99,6 +99,13 @@ export function barPalette(tasks: BarTask[], focusState = "idle"): BarPalette {
   return palette(RAINBOW, 7);
 }
 
+/** Who is at work, for the bar's hover text: the names of the sessions that are working or thinking. */
+export function workingNames(tasks: (BarTask & { name: string })[]): string[] {
+  return tasks
+    .filter((t) => t.id !== "integration_claude" && (t.state === "working" || t.state === "thinking" || t.state === "searching"))
+    .map((t) => t.name);
+}
+
 /** The CSS gradient for the palette. */
 export function barGradient(p: BarPalette): string {
   return `linear-gradient(90deg, ${[...p.stops, p.stops[0]].join(", ")})`;

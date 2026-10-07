@@ -6,9 +6,10 @@ import { Sound } from "./core/sound";
 import { State, type Settings } from "./core/state";
 import { Island } from "./island/island";
 import { registerHookHandlers } from "./island/hooks";
-import { loadAccounts, loadPlans, parseAccount, parsePlan, parsePlanText, saveAccounts, savePlans, sourceOf, startPlanClock } from "./core/plan";
+import { crossedUp, loadAccounts, loadPlans, parseAccount, parsePlan, parsePlanText, saveAccounts, savePlans, sourceOf, startPlanClock, type PlanSource, type PlanUsage } from "./core/plan";
 import { setLanguage, t } from "./core/i18n";
 import { mutedNow } from "./core/quiet";
+import { cue } from "./island/hooks";
 
 async function main() {
   const root = document.getElementById("root");
@@ -90,12 +91,29 @@ async function main() {
   // The last known numbers are shown right away after a restart.
   State.plans = loadPlans();
   State.accounts = loadAccounts();
+  /** A limit that went up through 80 % or 90 % since the last reading: say so, once. */
+  const warnPlan = (before: PlanUsage | undefined, after: PlanUsage, source: PlanSource) => {
+    if (!State.settings.planWarn) return;
+    const where = source === "wsl" ? "WSL" : "Windows";
+    for (const [label, key] of [[t("adv.compact.five"), "fiveHour"], [t("adv.compact.week"), "sevenDay"]] as const) {
+      const now = after[key];
+      const old = before?.[key];
+      // Only comparing within the same window: a new window (another reset time) starts again.
+      if (!now || !old || old.resetsAt !== now.resetsAt) continue;
+      const hit = crossedUp(old.pct, now.pct);
+      if (hit.length > 0) {
+        cue("rate", t("plan.warn"), `${where} · ${t("plan.warnBody", { label, pct: Math.round(now.pct) })}`);
+      }
+    }
+  };
+
   const takePlan = (raw: unknown) => {
     const message = (raw ?? {}) as { rate_limits?: unknown; cwd?: unknown };
     const plan = parsePlan(message.rate_limits);
     if (!plan) return;
     // Which install said it: a relay that does not say counts as Windows.
     const source = sourceOf(message.cwd) ?? "windows";
+    warnPlan(State.plans[source], plan, source);
     State.plans = { ...State.plans, [source]: plan };
     savePlans(State.plans);
     State.notify();
@@ -116,6 +134,7 @@ async function main() {
         saveAccounts(State.accounts);
       }
       if (plan) {
+        warnPlan(State.plans[probe.source], plan, probe.source);
         State.plans = { ...State.plans, [probe.source]: plan };
         savePlans(State.plans);
       }
@@ -135,6 +154,40 @@ async function main() {
   startPlanClock(() => State.planView());
   // `npm run dev` in a plain browser: `__statusline({rate_limits: {five_hour: {...}, seven_day: {...}}, cwd: "/home/me"})`.
   if (!IS_TAURI) (window as unknown as { __statusline: (raw: unknown) => void }).__statusline = takePlan;
+
+  // Once a day: is the connection to Claude Code still there? (Claude Code updates and other tools can
+  // take the hooks away without a word.) Only asked of someone who had connected it.
+  const dayPassed = (key: string): boolean => {
+    try {
+      const last = Number(localStorage.getItem(key) ?? 0);
+      if (Date.now() - last < 22 * 3600_000) return false;
+      localStorage.setItem(key, String(Date.now()));
+    } catch {
+      return false;
+    }
+    return true;
+  };
+  window.setTimeout(async () => {
+    if (!IS_TAURI || !State.settings.hooksInstalled || !dayPassed("coucou.connCheck")) return;
+    const status = await Bridge.hooksStatus();
+    if (!status) return;
+    if (!status.hookReady) island.showNote(t("conn.relay"), 7000);
+    else if (!status.installed) island.showNote(t("conn.lost"), 7000);
+  }, 25_000);
+
+  // Once a day, only if switched on: a newer version on GitHub? Told once per version.
+  window.setTimeout(async () => {
+    if (!IS_TAURI || !State.settings.checkUpdates || !dayPassed("coucou.updateCheck")) return;
+    try {
+      const info = await Bridge.checkUpdate();
+      if (!info.newer || localStorage.getItem("coucou.updateSeen") === info.tag) return;
+      localStorage.setItem("coucou.updateSeen", info.tag);
+      island.showNote(t("update.available", { tag: info.tag }), 7000);
+      void Bridge.notify(t("update.available", { tag: info.tag }), t("update.body", { tag: info.tag }));
+    } catch {
+      // Offline, or GitHub did not answer: nothing to say.
+    }
+  }, 60_000);
 
   // A full-screen game or video: the window is hidden on the Rust side, and the
   // hook handlers stop opening cards and playing sounds until it is gone.

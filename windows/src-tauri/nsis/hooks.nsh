@@ -22,6 +22,8 @@
   MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 "Also delete Coucou's settings and the API keys it saved in Windows Credential Manager?" IDNO coucou_keep_data
   ExecWait '"$INSTDIR\coucou.exe" --purge'
   coucou_keep_data:
+  ; The coucou:// link that a click on a notification uses.
+  DeleteRegKey HKCU "Software\Classes\coucou"
   RMDir /r "$LOCALAPPDATA\Coucou\bin"
   RMDir /r "$LOCALAPPDATA\Coucou\inbox"
   Delete "$LOCALAPPDATA\Coucou\coucou.log"

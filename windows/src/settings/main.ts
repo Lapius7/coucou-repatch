@@ -325,7 +325,7 @@ function choice<K extends keyof Settings>(label: string, key: K, options: [Setti
 }
 
 function advancedSection(): HTMLElement {
-  const flag = (label: string, key: "showGreeting" | "quietEnabled" | "quietApprovals", hint?: string) =>
+  const flag = (label: string, key: "showGreeting" | "quietEnabled" | "quietApprovals" | "hoverOpen" | "planWarn" | "checkUpdates", hint?: string) =>
     h("div", { class: "row" },
       h("label", { text: label }),
       toggle(settings[key], (v) => {
@@ -406,6 +406,9 @@ function advancedSection(): HTMLElement {
     choice(t("adv.ruleDays"), "ruleDays", [[0, t("adv.ruleDays.0")], ...[1, 7, 30].map((n): [number, string] => [n, t("adv.ruleDays.n", { n })])]),
     choice(t("adv.offset"), "uiOffsetX", offsets),
     flag(t("adv.greeting"), "showGreeting"),
+    flag(t("adv.hoverOpen"), "hoverOpen"),
+    flag(t("adv.planWarn"), "planWarn"),
+    flag(t("adv.checkUpdates"), "checkUpdates", t("adv.checkUpdatesHint")),
     flag(t("adv.quiet"), "quietEnabled", t("adv.quietHint")),
     time(t("adv.quietFrom"), "quietFrom"),
     time(t("adv.quietTo"), "quietTo"),

@@ -26,6 +26,8 @@ export interface AgentTask {
   startedAt?: number | null;
   /** How long the last finished turn took. */
   lastDurationMs?: number | null;
+  /** The kind of the last error (`rate_limit`…), as Claude Code named it. */
+  lastErrorKind?: string | null;
   /** Why the last turn stopped with an error (StopFailure), as Claude Code said it. */
   lastError?: string | null;
   /** Last hook event seen, to sweep sessions that vanished without a SessionEnd. */
@@ -198,6 +200,12 @@ export interface Settings {
   ruleDays: number;
   /** Island position, px from the centre (negative = left). */
   uiOffsetX: number;
+  /** The closed island opens when the pointer rests on it. */
+  hoverOpen: boolean;
+  /** Tell when a plan limit passes 80 % and 90 %. */
+  planWarn: boolean;
+  /** Ask GitHub once a day for a newer version. */
+  checkUpdates: boolean;
   /** How the closed island looks: the small notch, or a thin bar. */
   closedStyle: "notch" | "bar";
   /** How large the island is drawn (0.8 – 1.5). */
@@ -265,6 +273,9 @@ export const DEFAULT_SETTINGS: Settings = {
   quietApprovals: true,
   ruleDays: 0,
   uiOffsetX: 0,
+  hoverOpen: false,
+  planWarn: true,
+  checkUpdates: false,
   closedStyle: "notch",
   uiScale: 1,
   tipEmail: "full",
@@ -349,7 +360,17 @@ class AppState {
   fileDragOver = false;
 
   promptContext: PromptContext | null = null;
-  droppedFile: { name: string; path: string } | null = null;
+  /** The files that came with the question (dropped, or a picture of the screen). */
+  droppedFiles: { name: string; path: string }[] = [];
+  /** Sessions that finished a moment ago (newest last), so a card can point at the others. */
+  recentDone: { id: string; at: number }[] = [];
+  /** The first of them (several files can be dropped at once). */
+  get droppedFile(): { name: string; path: string } | null {
+    return this.droppedFiles[0] ?? null;
+  }
+  set droppedFile(file: { name: string; path: string } | null) {
+    this.droppedFiles = file ? [file] : [];
+  }
   noteMessage: string | null = null;
   searchResult: SearchResult | null = null;
   chatHistory: ChatMessage[] = [];

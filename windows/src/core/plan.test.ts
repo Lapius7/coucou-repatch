@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { setLanguage } from "./i18n";
 import {
-  maskEmail, parseAccount, parsePlan, parsePlanText, pickPlan, planColor, planName, planTip, shownPct, sourceOf, timeLeft,
+  crossedUp, hardestWindow, maskEmail, parseAccount, parsePlan, parsePlanText, pickPlan, planColor, planName, planTip, shownPct, sourceOf, timeLeft,
   DEFAULT_TIP, type PlanSet, type PlanView,
 } from "./plan";
 
@@ -195,5 +195,35 @@ describe("the hover text", () => {
     const noAccount: PlanView = { ...view(), account: undefined };
     expect(planTip(noAccount, now)[0]).toBe("WSL · account not known yet");
     expect(planTip({ ...noAccount, tip: { ...DEFAULT_TIP, source: false } }, now)[0]).toMatch(/^5-hour/);
+  });
+});
+
+describe("when a limit is hit, and when it is nearly hit", () => {
+  const now = 1_700_000_000_000;
+  const at = (seconds: number) => now / 1000 + seconds;
+
+  it("the fullest window is the one the error is about", () => {
+    const plan = { fiveHour: { pct: 99, resetsAt: at(600) }, sevenDay: { pct: 40, resetsAt: at(86400) }, updatedAt: now };
+    expect(hardestWindow(plan, now)).toEqual(plan.fiveHour);
+    const week = { ...plan, sevenDay: { pct: 100, resetsAt: at(86400) } };
+    expect(hardestWindow(week, now)).toEqual(week.sevenDay);
+  });
+
+  it("a window that has already reset does not count", () => {
+    const plan = { fiveHour: { pct: 99, resetsAt: at(-10) }, sevenDay: { pct: 40, resetsAt: at(86400) }, updatedAt: now };
+    expect(hardestWindow(plan, now)).toEqual(plan.sevenDay);
+    expect(hardestWindow(undefined, now)).toBeNull();
+  });
+
+  it("a threshold is crossed only going up, and only once", () => {
+    expect(crossedUp(70, 82)).toEqual([80]);
+    expect(crossedUp(70, 95)).toEqual([80, 90]);
+    expect(crossedUp(85, 86)).toEqual([]);
+    expect(crossedUp(92, 40)).toEqual([]);
+    expect(crossedUp(79.9, 80)).toEqual([80]);
+  });
+
+  it("the first reading after a start says nothing", () => {
+    expect(crossedUp(undefined, 95)).toEqual([]);
   });
 });

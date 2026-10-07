@@ -10,7 +10,8 @@ import {
   canEnlarge,
   type IslandMode, type IslandViewName,
 } from "../core/layout";
-import { barGradient, barPalette } from "./barcolor";
+import { barGradient, barPalette, workingNames } from "./barcolor";
+import { t } from "../core/i18n";
 import { paintPlan } from "../core/plan";
 import { addRule } from "../core/rules";
 import { Sound } from "../core/sound";
@@ -80,6 +81,7 @@ export class Island {
   /** The island is drawn as the thin bar (only once it has shrunk to it, not while it closes). */
   private barOn = false;
   private barKey = "";
+  private hoverOpenTimer: number | null = null;
   private homeCollapseAt: number | null = null;
 
   // Bot hover → love (IslandWindowController.botHoverIn)
@@ -437,6 +439,15 @@ export class Island {
     this.fsm.reveal();
   }
 
+  /** A short message in the note card, then back to where it was. */
+  showNote(message: string, ms = 5000) {
+    State.noteMessage = message;
+    this.alert("note");
+    window.setTimeout(() => {
+      if (State.view === "note") this.setView(State.defaultView());
+    }, ms);
+  }
+
   /** An alert stopped waiting for an answer: let the island auto-close again. */
   dropPin() {
     this.fsm.pinned = State.userPinned;
@@ -479,13 +490,13 @@ export class Island {
       case "drop": {
         State.fileDragOver = false;
         this.dragBefore = null;
-        const path = e.paths?.[0];
-        if (!path) {
+        const paths = (e.paths ?? []).slice(0, 8);
+        if (paths.length === 0) {
           this.engine.animateMorph(0);
           this.setView(State.defaultView());
           return;
         }
-        this.swallow(path);
+        this.swallow(paths);
         break;
       }
     }
@@ -496,10 +507,10 @@ export class Island {
    * the inbox runs in the background and swaps the path in when it lands, so a
    * slow disk can never stall the animation — same as FileDropHandler on macOS.
    */
-  private swallow(path: string) {
-    const name = path.split(/[\\/]/).pop() || "file";
-    State.droppedFile = { name, path };
-    State.promptContext = { kind: "file", name, path };
+  private swallow(paths: string[]) {
+    // Several files can come at once: all of them go with the first question.
+    State.droppedFiles = paths.map((path) => ({ name: path.split(/[\\/]/).pop() || "file", path }));
+    State.promptContext = null;
     State.chatHistory = [];
     void Bridge.chatReset();
 
@@ -513,10 +524,10 @@ export class Island {
     this.setView("prompt");
     this.ensureRunning();
 
-    void Bridge.ingestFile(path)
-      .then((file) => {
-        State.droppedFile = { name: file.name, path: file.path };
-        State.promptContext = { kind: "file", name: file.name, path: file.path };
+    void Promise.all(paths.map((path) => Bridge.ingestFile(path)))
+      .then((files) => {
+        // The copies in the inbox replace the originals (the page asks for them by that path).
+        State.droppedFiles = files.map((file) => ({ name: file.name, path: file.path }));
         State.notify();
       })
       .catch((err) => {
@@ -759,8 +770,19 @@ export class Island {
       if (this.fsm.state === "coucou") this.greeting.hover();
       this.fsm.mouseEntered();
       this.homeCollapseAt = null;
+      // "Open when the pointer rests on it": a short wait, so passing by does nothing.
+      if (State.settings.hoverOpen && State.mode === "compact" && !State.fileDragOver) {
+        this.hoverOpenTimer = window.setTimeout(() => {
+          this.hoverOpenTimer = null;
+          if (State.mode === "compact" && this.isPointerInside() && State.settings.hoverOpen) this.fsm.click();
+        }, 450);
+      }
     }
     if (!inIsland && this.wasInIsland) {
+      if (this.hoverOpenTimer !== null) {
+        window.clearTimeout(this.hoverOpenTimer);
+        this.hoverOpenTimer = null;
+      }
       this.fsm.mouseLeft();
       if (this.fsm.state === "home" && !State.keepOpen) {
         this.homeCollapseAt = performance.now() + State.settings.autoCloseInterval * 1000;
@@ -1031,6 +1053,15 @@ export class Island {
     }
 
     // Closed as a thin bar: only the bar, tinted by what the focused session is doing.
+    // A word of status when the pointer rests on the bar.
+    if (State.settings.closedStyle === "bar" && State.mode === "compact") {
+      const names = workingNames(State.tasks);
+      const tip = names.length > 0 ? t("bar.working", { n: names.length, names: names.join(", ") }) : t("bar.idle");
+      if (this.islandEl.title !== tip) this.islandEl.title = tip;
+    } else if (this.islandEl.title) {
+      this.islandEl.removeAttribute("title");
+    }
+
     // The colours of the bar: the sessions that are working, or what the focused one is doing.
     if (State.settings.closedStyle === "bar") {
       const palette = barPalette(State.tasks, State.focusTask?.state ?? "idle");

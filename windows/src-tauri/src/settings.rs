@@ -71,6 +71,15 @@ pub struct Settings {
     /// Days a remembered "always allow" rule lasts; 0 = for ever.
     #[serde(default)]
     pub rule_days: u32,
+    /// The closed island opens when the pointer rests on it (instead of on a click).
+    #[serde(default)]
+    pub hover_open: bool,
+    /// Tell once when a plan limit passes 80 % and 90 %.
+    #[serde(default = "default_true")]
+    pub plan_warn: bool,
+    /// Ask GitHub once a day whether there is a newer version (off until switched on).
+    #[serde(default)]
+    pub check_updates: bool,
     /// How far the island sits from the centre of the screen, in px (negative = left).
     #[serde(default)]
     pub ui_offset_x: f64,
@@ -207,6 +216,9 @@ impl Default for Settings {
             quiet_to: default_quiet_to(),
             quiet_approvals: true,
             rule_days: 0,
+            hover_open: false,
+            plan_warn: true,
+            check_updates: false,
             ui_offset_x: 0.0,
             closed_style: default_closed_style(),
             ui_scale: default_ui_scale(),
@@ -273,6 +285,7 @@ mod tests {
         assert!(s.show_greeting && !s.quiet_enabled && s.quiet_approvals);
         assert_eq!((s.quiet_from.as_str(), s.quiet_to.as_str()), ("23:00", "07:00"));
         assert_eq!((s.rule_days, s.ui_offset_x), (0, 0.0));
+        assert!(!s.hover_open && s.plan_warn && !s.check_updates);
         assert_eq!(s.tip_email, "full");
         assert!(s.tip_source && s.tip_plan && s.tip_five && s.tip_week && s.tip_reset);
         assert!(!s.tip_updated);

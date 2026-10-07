@@ -272,7 +272,7 @@ function recordOutput(agentId: string, input: Record<string, unknown>, response:
 }
 
 /** The one place that decides how an event gets your attention. */
-function cue(kind: "finish" | "approval" | "error", title: string, body: string) {
+export function cue(kind: "finish" | "approval" | "error" | "rate", title: string, body: string) {
   const mode = State.settings.notifyMode;
   if (mode === "sound" || mode === "both") Sound.play(kind);
   // Quiet hours hold back the notification too (Sound.play asks for itself).
@@ -475,6 +475,8 @@ function handleHook(island: Island, payload: HookPayload) {
 
     case "Stop":
       State.updateTask(agentId, "finished");
+      // Remember who finished lately: a card can then point at the other sessions that are done.
+      State.recentDone = [...State.recentDone.filter((d) => d.id !== agentId && Date.now() - d.at < 120_000), { id: agentId, at: Date.now() }].slice(-6);
       {
         const t = self();
         if (t) {
@@ -531,6 +533,7 @@ function handleHook(island: Island, payload: HookPayload) {
       const t = State.tasks.find((x) => x.id === agentId);
       if (t) {
         // The reason Claude Code gave, not the last thing the session did.
+        t.lastErrorKind = kind || null;
         t.lastError = [known && known !== `err.type.${kind}` ? known : kind, payload.error_details ?? payload.message ?? ""]
           .map((x) => String(x).replace(/\s+/g, " ").trim())
           .filter(Boolean)

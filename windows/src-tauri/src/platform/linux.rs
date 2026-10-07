@@ -175,6 +175,9 @@ pub fn failed_hotkeys() -> Vec<String> {
 }
 
 /// `notify-send`, where it exists. The text is passed as arguments after `--`.
+/// Nothing to register: a notification does not bring the island up here.
+pub fn register_protocol() {}
+
 pub fn notify_toast(title: &str, body: &str) {
     let _ = std::process::Command::new("notify-send").args(["--", title, body]).spawn();
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { barGradient, barPalette, lighten, shiftHue } from "./barcolor";
+import { barGradient, barPalette, lighten, shiftHue, workingNames } from "./barcolor";
 
 const task = (id: string, color: string, state: string) => ({ id, color, state });
 
@@ -61,5 +61,19 @@ describe("the colours of the thin bar", () => {
     expect(lighten("#ffffff")).toBe("#ffffff");
     expect(shiftHue("not a colour", 30)).toMatch(/^#[0-9a-f]{6}$/);
     expect(barPalette([task("s1", "oops", "working")]).stops.every((c) => /^#[0-9a-f]{6}$/.test(c))).toBe(true);
+  });
+});
+
+describe("who is at work (the bar's hover text)", () => {
+  const named = (id: string, name: string, state: string) => ({ id, name, color: "#3b82f6", state });
+
+  it("names the sessions that are working or thinking, not the placeholder or the idle ones", () => {
+    expect(workingNames([
+      named("a", "aurora", "working"),
+      named("b", "web", "thinking"),
+      named("c", "docs", "idle"),
+      named("integration_claude", "VS Code", "working"),
+    ])).toEqual(["aurora", "web"]);
+    expect(workingNames([])).toEqual([]);
   });
 });

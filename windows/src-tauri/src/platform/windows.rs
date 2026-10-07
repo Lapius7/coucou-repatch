@@ -347,6 +347,23 @@ $bmp.Dispose()
     }
 }
 
+/// Makes `coucou://` open this program: that is how a click on a notification brings the island up
+/// (the notification carries `coucou://open`; Windows starts the program with it, and the running
+/// instance receives it through the single-instance hand-over). Only the current user's registry
+/// (HKCU\Software\Classes\coucou) is written, and only what is needed.
+pub fn register_protocol() {
+    let Ok(exe) = std::env::current_exe() else { return };
+    let command = format!("\"{}\" \"%1\"", exe.display());
+    let steps: [Vec<String>; 3] = [
+        vec!["add".into(), r"HKCU\Software\Classes\coucou".into(), "/ve".into(), "/d".into(), "URL:Coucou".into(), "/f".into()],
+        vec!["add".into(), r"HKCU\Software\Classes\coucou".into(), "/v".into(), "URL Protocol".into(), "/d".into(), "".into(), "/f".into()],
+        vec!["add".into(), r"HKCU\Software\Classes\coucou\shell\open\command".into(), "/ve".into(), "/d".into(), command, "/f".into()],
+    ];
+    for args in steps {
+        let _ = no_console(Command::new("reg.exe").args(&args)).status();
+    }
+}
+
 /// A toast in the notification centre. Windows PowerShell can raise one without
 /// an installed app, under its own identity. The text goes in through the
 /// environment and is XML-escaped by the script, so it never touches the command line.
@@ -357,7 +374,7 @@ $b = [System.Security.SecurityElement]::Escape($env:COUCOU_BODY)
 [void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
 [void][Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
 $x = New-Object Windows.Data.Xml.Dom.XmlDocument
-$x.LoadXml("<toast><visual><binding template='ToastGeneric'><text>$t</text><text>$b</text></binding></visual></toast>")
+$x.LoadXml("<toast activationType='protocol' launch='coucou://open'><visual><binding template='ToastGeneric'><text>$t</text><text>$b</text></binding></visual></toast>")
 $n = [Windows.UI.Notifications.ToastNotification]::new($x)
 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe').Show($n)
 "#;

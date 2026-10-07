@@ -121,6 +121,7 @@ Changes version by version are in [CHANGELOG.en.md](CHANGELOG.en.md).
   surroundings and the island react; anywhere else a file can still be dropped on the app underneath. In the
   question screen a click removes a file; a picture gets a larger **preview** (its name small over it) that opens
   **large on a click** and goes away with the × or when **dragged sideways**.
+- **Several files dropped at once**, **a click on a notification opens the island**, a **copy button** in the history, the **reset time** on a usage-limit error, the other finished sessions on the finished card, a **connection self-check**, **warnings** at 80 % / 90 % of a limit, an optional **new-version notice**, **open on hover**, and a **saved chat draft**.
 - **More settings** (Settings → More settings): lines around a change in the diff, history size, how often the limits are fetched, what the closed notch shows, quiet hours, how long "always allow" lasts, the launch greeting, the island position, copying and loading the settings, resetting to the defaults.
 - **Closed shape**: instead of the small notch, only a **thin bar** at the top of the screen; its colour shows what the session is doing.
 - **Island size**: 80 % – 150 % (mini settings panel, Settings → General).

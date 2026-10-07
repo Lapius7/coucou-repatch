@@ -11,6 +11,7 @@ mod platform;
 mod secrets;
 mod settings;
 mod tray;
+mod update;
 
 use std::process::Command;
 use std::sync::atomic::Ordering;
@@ -422,6 +423,12 @@ async fn read_image_preview(path: String) -> Result<String, String> {
         .map_err(|e| e.to_string())?
 }
 
+/// Is there a newer version on GitHub? (Only called when the user switched the check on.)
+#[tauri::command]
+async fn check_update() -> Result<update::UpdateInfo, String> {
+    update::check().await
+}
+
 /// Right-click on the island: the tray menu, where the mouse is.
 #[tauri::command]
 fn show_context_menu(app: AppHandle) {
@@ -509,6 +516,7 @@ pub fn run() {
             secret_clear,
             open_settings_window,
             show_context_menu,
+            check_update,
             read_image_preview,
             set_menu_labels,
             set_tray_dimmed,
@@ -540,6 +548,8 @@ pub fn run() {
 
             log::line(format!("--- Coucou {} started ---", env!("CARGO_PKG_VERSION")));
             hooks::ensure_hook_exe(&handle);
+            // A click on a notification starts `coucou://open`: teach Windows what that means.
+            std::thread::spawn(platform::register_protocol);
             // First run: open the setup. Someone who is already connected is not welcomed again.
             if !loaded.setup_done {
                 if hooks::status().installed {

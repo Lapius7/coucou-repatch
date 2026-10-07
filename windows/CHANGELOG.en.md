@@ -7,6 +7,18 @@ What changed in each published version. The same text goes into the GitHub relea
 
 ## [Unreleased]
 
+- **Added**: **several files can be dropped at once** (up to 8; they all go with the question).
+- **Added**: **clicking a Windows notification opens the island**. For that, at startup Coucou registers a `coucou://` link in the
+  current user's registry (`HKCU\Software\Classes\coucou`); uninstalling removes it.
+- **Added**: a **copy button** on replies, questions and commands in the history (it shows on hover).
+- **Added**: on a usage-limit error the **reset time** is shown on the error card.
+- **Added**: when several sessions finish one after another, the finished card shows **the other finished sessions** as buttons.
+- **Added**: a **connection self-check** (once a day): if Claude Code had been connected and its hooks are gone, the island says so.
+- **Added**: a warning once when a plan limit passes **80 % and 90 %** (can be switched off).
+- **Added**: a **new-version notice** (off by default; when on, it asks GitHub once a day).
+- **Added**: an "open when the pointer rests on it" setting; hovering the thin bar names the sessions at work.
+- **Added**: the half-written chat question is kept, even after closing the island or restarting.
+
 - **Changed**: "Read" on the finished card (and a click on its title) and "Open history" on the error card now open the history
   at the **larger size**, the same as when you pull the island down.
 

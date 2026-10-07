@@ -83,7 +83,28 @@ impl Chat {
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ChatContext {
     File { name: String, path: String },
+    /// Several dropped files at once.
+    Files { files: Vec<FileRef> },
     Window { app_name: String, title: String, url: Option<String> },
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct FileRef {
+    pub name: String,
+    pub path: String,
+}
+
+/// The context as a list of single items: `Files` becomes one `File` each.
+fn expand_context(context: Option<ChatContext>) -> Vec<ChatContext> {
+    match context {
+        None => Vec::new(),
+        Some(ChatContext::Files { files }) => files
+            .into_iter()
+            .take(8)
+            .map(|f| ChatContext::File { name: f.name, path: f.path })
+            .collect(),
+        Some(other) => vec![other],
+    }
 }
 
 #[derive(Serialize)]
@@ -110,21 +131,23 @@ pub async fn send(
     // File / window context rides along with the first message only, exactly
     // like ClaudeService.chat().
     if chat.is_empty() {
-        match &context {
-            Some(ChatContext::File { name, path }) => {
-                if let Some(block) = file_block(path) {
-                    content.push(block);
+        for item in expand_context(context) {
+            match &item {
+                ChatContext::File { name, path } => {
+                    if let Some(block) = file_block(path) {
+                        content.push(block);
+                    }
+                    content.push(json!({ "type": "text", "text": format!("File: {name}") }));
                 }
-                content.push(json!({ "type": "text", "text": format!("File: {name}") }));
-            }
-            Some(ChatContext::Window { app_name, title, url }) => {
-                let mut text = format!("Context — App: {app_name}, Window: {title}");
-                if let Some(url) = url {
-                    text.push_str(&format!(", URL: {url}"));
+                ChatContext::Window { app_name, title, url } => {
+                    let mut text = format!("Context — App: {app_name}, Window: {title}");
+                    if let Some(url) = url {
+                        text.push_str(&format!(", URL: {url}"));
+                    }
+                    content.push(json!({ "type": "text", "text": text }));
                 }
-                content.push(json!({ "type": "text", "text": text }));
+                ChatContext::Files { .. } => {}
             }
-            None => {}
         }
     }
     content.push(json!({ "type": "text", "text": query }));
@@ -302,6 +325,7 @@ async fn send_cli(
         return Err("No API key, and the Claude CLI was not found. Install Claude Code or add a key in settings.".into());
     }
 
+    let contexts = expand_context(context);
     let model = cli_model(model);
     // The model comes from settings.json: never something that could read as an option.
     if model.is_empty() || model.starts_with('-') || model.contains(char::is_whitespace) {
@@ -315,35 +339,43 @@ async fn send_cli(
         let path_for_cli = |p: &str| if wsl { to_wsl_path(p) } else { p.to_string() };
         let mut prompt = String::new();
         let mut tools = vec!["WebSearch", "WebFetch"];
-        let mut add_dir: Option<String> = None;
+        let mut add_dirs: Vec<String> = Vec::new();
         if !started {
             prompt.push_str(SYSTEM_PROMPT);
             prompt.push_str("\n\n");
-            match &context {
-                Some(ChatContext::File { name, path }) => match file_text(path) {
-                    Some(text) => prompt.push_str(&format!("File: {name}\nFile contents:\n{text}\n\n")),
-                    None => {
-                        let shown = path_for_cli(path);
-                        prompt.push_str(&format!(
-                            "File: {name} (saved at {shown}). Read it with the Read tool if you need it.\n\n"
-                        ));
-                        tools.push("Read");
-                        add_dir = std::path::Path::new(&shown)
-                            .parent()
-                            .map(|d| d.to_string_lossy().replace('\\', "/"));
-                        if !wsl {
-                            add_dir = std::path::Path::new(path).parent().map(|d| d.to_string_lossy().to_string());
+            for item in &contexts {
+                match item {
+                    ChatContext::File { name, path } => match file_text(path) {
+                        Some(text) => prompt.push_str(&format!("File: {name}\nFile contents:\n{text}\n\n")),
+                        None => {
+                            let shown = path_for_cli(path);
+                            prompt.push_str(&format!(
+                                "File: {name} (saved at {shown}). Read it with the Read tool if you need it.\n\n"
+                            ));
+                            if !tools.contains(&"Read") {
+                                tools.push("Read");
+                            }
+                            let dir = if wsl {
+                                std::path::Path::new(&shown).parent().map(|d| d.to_string_lossy().replace('\\', "/"))
+                            } else {
+                                std::path::Path::new(path).parent().map(|d| d.to_string_lossy().to_string())
+                            };
+                            if let Some(dir) = dir {
+                                if !add_dirs.contains(&dir) {
+                                    add_dirs.push(dir);
+                                }
+                            }
                         }
+                    },
+                    ChatContext::Window { app_name, title, url } => {
+                        prompt.push_str(&format!("Context — App: {app_name}, Window: {title}"));
+                        if let Some(url) = url {
+                            prompt.push_str(&format!(", URL: {url}"));
+                        }
+                        prompt.push_str("\n\n");
                     }
-                },
-                Some(ChatContext::Window { app_name, title, url }) => {
-                    prompt.push_str(&format!("Context — App: {app_name}, Window: {title}"));
-                    if let Some(url) = url {
-                        prompt.push_str(&format!(", URL: {url}"));
-                    }
-                    prompt.push_str("\n\n");
+                    ChatContext::Files { .. } => {}
                 }
-                None => {}
             }
         }
         prompt.push_str(&query);
@@ -361,7 +393,7 @@ async fn send_cli(
             if started { "--resume".into() } else { "--session-id".into() },
             session_id.clone(),
         ];
-        if let Some(dir) = add_dir {
+        for dir in &add_dirs {
             // `=` binds the folder to the option, whatever the name looks like.
             args.push(format!("--add-dir={dir}"));
         }

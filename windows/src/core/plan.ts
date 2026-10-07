@@ -221,6 +221,19 @@ export function sourceOf(cwd: unknown): PlanSource | null {
 }
 
 /** What to draw: the limits, and a short tag naming whose they are when it is not obvious. */
+/** The window that is fullest right now (the one a limit error is about), or null. */
+export function hardestWindow(plan: PlanUsage | undefined, nowMs = Date.now()): PlanWindow | null {
+  const windows = [plan?.fiveHour, plan?.sevenDay].filter((w): w is PlanWindow => !!w && w.resetsAt * 1000 > nowMs);
+  if (windows.length === 0) return null;
+  return windows.reduce((a, b) => (shownPct(b, nowMs) > shownPct(a, nowMs) ? b : a));
+}
+
+/** The thresholds (80, 90…) that a window went up through between two readings. */
+export function crossedUp(before: number | undefined, after: number, thresholds: number[] = [80, 90]): number[] {
+  if (before === undefined) return []; // the first reading after a start tells nothing about a crossing
+  return thresholds.filter((t) => before < t && after >= t);
+}
+
 /** What the hover on the plan numbers says: each line can be left out, the e-mail can be masked. */
 export interface TipOptions {
   email: "full" | "masked" | "hidden";

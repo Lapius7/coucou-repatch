@@ -2301,3 +2301,83 @@ input[type="range"]::-webkit-slider-thumb {
 .chip.locked:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* Several files: side by side */
+.chip-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+/* History: a copy button on each reply, question and command (it shows on hover) */
+.log-entry {
+  position: relative;
+}
+
+.log-copy {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  border: 0;
+  border-radius: 6px;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink-2);
+  font: 500 12px var(--font);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.log-entry:hover .log-copy {
+  opacity: 1;
+}
+
+.log-copy:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* The finished card: the other sessions that are done, as small buttons */
+.fin-others {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.fin-others-label {
+  font: 400 11px var(--font);
+  color: var(--dim-2);
+  white-space: nowrap;
+}
+
+.fin-other {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 120px;
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink-2);
+  font: 500 11px var(--font);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.fin-other:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.fin-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
