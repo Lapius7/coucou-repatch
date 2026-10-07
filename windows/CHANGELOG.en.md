@@ -5,7 +5,7 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
-## [Unreleased]
+## [1.3.0] — Behaviour improvements
 
 - **Added**: **several files can be dropped at once** (up to 8; they all go with the question).
 - **Added**: **clicking a Windows notification opens the island**. For that, at startup Coucou registers a `coucou://` link in the
@@ -21,6 +21,9 @@ What changed in each published version. The same text goes into the GitHub relea
 
 - **Changed**: "Read" on the finished card (and a click on its title) and "Open history" on the error card now open the history
   at the **larger size**, the same as when you pull the island down.
+
+- **Fixed**: the mouse did not work on the left part of the session rows in the open island. The closed island's limits
+  line stayed on, invisible, and took the mouse.
 
 ## [1.2.1] — a picture fix
 
