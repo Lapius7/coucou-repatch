@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { setLanguage } from "./i18n";
 import {
-  parseAccount, parsePlan, parsePlanText, pickPlan, planColor, planName, shownPct, sourceOf, timeLeft,
-  type PlanSet,
+  maskEmail, parseAccount, parsePlan, parsePlanText, pickPlan, planColor, planName, planTip, shownPct, sourceOf, timeLeft,
+  DEFAULT_TIP, type PlanSet, type PlanView,
 } from "./plan";
 
 describe("parsePlan: the rate_limits of the status line", () => {
@@ -126,5 +127,73 @@ describe("whose limits", () => {
     expect(pickPlan(both, "auto", "/home/me")?.source).toBe("wsl");
     expect(pickPlan(both, "auto", null)?.source).toBe("wsl"); // updated last
     expect(pickPlan({}, "auto", null)).toBeNull();
+  });
+});
+
+describe("the hover text", () => {
+  beforeAll(() => {
+    (globalThis as unknown as { document: unknown }).document = { documentElement: {} };
+    setLanguage("en");
+  });
+
+  const now = 1_700_000_000_000;
+  const view = (tip: Partial<typeof DEFAULT_TIP> = {}): PlanView => ({
+    plan: {
+      fiveHour: { pct: 32, resetsAt: now / 1000 + 3600 },
+      sevenDay: { pct: 28, resetsAt: now / 1000 + 86400 * 2 },
+      updatedAt: now - 3 * 60_000,
+    },
+    source: "wsl",
+    account: { email: "work@example.com", plan: "pro" },
+    tip: { ...DEFAULT_TIP, ...tip },
+  });
+
+  it("masks an e-mail", () => {
+    expect(maskEmail("work@example.com")).toBe("w***@example.com");
+    expect(maskEmail("a@b.c")).toBe("a***@b.c");
+    expect(maskEmail("no-at-sign")).toBe("***");
+    expect(maskEmail("@x.y")).toBe("***");
+  });
+
+  it("shows everything by default, except the update time", () => {
+    const lines = planTip(view(), now);
+    expect(lines[0]).toBe("WSL · work@example.com");
+    expect(lines[1]).toBe("Plan: Pro");
+    expect(lines[2]).toMatch(/^5-hour limit: 32% used, resets /);
+    expect(lines[3]).toMatch(/^Weekly limit: 28% used, resets /);
+    expect(lines).toHaveLength(4);
+  });
+
+  it("the e-mail can be masked or left out", () => {
+    expect(planTip(view({ email: "masked" }), now)[0]).toBe("WSL · w***@example.com");
+    expect(planTip(view({ email: "hidden" }), now)[0]).toBe("WSL");
+    expect(planTip(view({ email: "hidden", source: false }), now)[0]).toBe("Plan: Pro");
+    // The real address is nowhere in the text when it is masked or hidden.
+    for (const email of ["masked", "hidden"] as const) {
+      expect(planTip(view({ email }), now).join(" | ")).not.toContain("work@example.com");
+    }
+  });
+
+  it("each line can be switched off, and the reset time too", () => {
+    expect(planTip(view({ plan: false }), now)).toHaveLength(3);
+    expect(planTip(view({ five: false }), now).some((l) => l.startsWith("5-hour"))).toBe(false);
+    expect(planTip(view({ week: false }), now).some((l) => l.startsWith("Weekly"))).toBe(false);
+    const noReset = planTip(view({ reset: false }), now);
+    expect(noReset).toContain("5-hour limit: 32% used");
+    expect(noReset).toContain("Weekly limit: 28% used");
+  });
+
+  it("can say how long ago the numbers were heard", () => {
+    expect(planTip(view({ updated: true }), now).at(-1)).toBe("Updated 3m ago");
+  });
+
+  it("everything off gives no hover at all", () => {
+    expect(planTip(view({ email: "hidden", source: false, plan: false, five: false, week: false, reset: false, updated: false }), now)).toEqual([]);
+  });
+
+  it("without an account it says so (unless the source is off)", () => {
+    const noAccount: PlanView = { ...view(), account: undefined };
+    expect(planTip(noAccount, now)[0]).toBe("WSL · account not known yet");
+    expect(planTip({ ...noAccount, tip: { ...DEFAULT_TIP, source: false } }, now)[0]).toMatch(/^5-hour/);
   });
 });

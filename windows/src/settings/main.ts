@@ -8,7 +8,7 @@ import { DEFAULT_HOTKEYS, DEFAULT_SETTINGS, HOTKEY_LABELS, type Settings } from 
 import { h, clear } from "../views/dom";
 import { loadRules, removeRule } from "../core/rules";
 import { LANGUAGES, setLanguage, t } from "../core/i18n";
-import { loadAccounts, loadPlans, planName } from "../core/plan";
+import { loadAccounts, loadPlans, planName, planTip, type PlanView } from "../core/plan";
 import { formatSpan, recentUsage } from "../core/usage";
 
 let settings: Settings = { ...DEFAULT_SETTINGS };
@@ -305,6 +305,61 @@ function apiSection(hasKey: boolean): HTMLElement {
 
 // ── General section ───────────────────────────────────────────────────────────
 
+/** The hover on the plan numbers: which lines to show, with a preview of the result. */
+function tipBlock(): HTMLElement {
+  const preview = h("pre", { class: "tip-preview" });
+  // A made-up account and numbers: the preview never shows the real e-mail.
+  const sample = (): PlanView => ({
+    plan: {
+      fiveHour: { pct: 32, resetsAt: Math.floor(Date.now() / 1000) + 4 * 3600 + 17 * 60 },
+      sevenDay: { pct: 28, resetsAt: Math.floor(Date.now() / 1000) + 2 * 86400 },
+      updatedAt: Date.now() - 3 * 60_000,
+    },
+    source: "wsl",
+    account: { email: "work@example.com", plan: "pro" },
+    tip: {
+      email: settings.tipEmail, source: settings.tipSource, plan: settings.tipPlan, five: settings.tipFive,
+      week: settings.tipWeek, reset: settings.tipReset, updated: settings.tipUpdated,
+    },
+  });
+  const paint = () => {
+    const lines = planTip(sample());
+    preview.textContent = lines.length > 0 ? lines.join("\n") : t("set.tipEmpty");
+  };
+
+  const email = h("select", {}) as HTMLSelectElement;
+  for (const v of ["full", "masked", "hidden"] as const) email.append(h("option", { value: v, text: t(`set.tipEmail.${v}`) }));
+  email.value = settings.tipEmail;
+  email.addEventListener("change", () => {
+    settings.tipEmail = email.value as Settings["tipEmail"];
+    void save();
+    paint();
+  });
+
+  const flag = (label: string, key: "tipSource" | "tipPlan" | "tipFive" | "tipWeek" | "tipReset" | "tipUpdated") =>
+    h("div", { class: "row" },
+      h("label", { text: label }),
+      toggle(settings[key], (v) => {
+        settings[key] = v;
+        void save();
+        paint();
+      }),
+    );
+
+  paint();
+  return h("div", { class: "tip-block" },
+    h("div", { class: "row" }, h("label", { text: t("set.tip") }), h("span", { class: "hint", text: t("set.tipHint") })),
+    h("div", { class: "row" }, h("label", { text: t("set.tipEmail") }), email),
+    flag(t("set.tipSource"), "tipSource"),
+    flag(t("set.tipPlan"), "tipPlan"),
+    flag(t("set.tipFive"), "tipFive"),
+    flag(t("set.tipWeek"), "tipWeek"),
+    flag(t("set.tipReset"), "tipReset"),
+    flag(t("set.tipUpdated"), "tipUpdated"),
+    h("div", { class: "row" }, h("label", { text: t("set.tipPreview") }), preview),
+  );
+}
+
 function generalSection(): HTMLElement {
   const volume = h("input", {
     type: "range", min: "0", max: "0.2", step: "0.005",
@@ -446,6 +501,7 @@ function generalSection(): HTMLElement {
       planSource,
       h("span", { class: "hint", text: planSeen }),
     ),
+    tipBlock(),
     h("div", { class: "row" },
       h("label", { text: t("set.liveDiff") }),
       toggle(settings.liveDiff, (v) => { settings.liveDiff = v; void save(); }),

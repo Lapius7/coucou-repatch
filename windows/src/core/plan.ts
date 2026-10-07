@@ -221,11 +221,72 @@ export function sourceOf(cwd: unknown): PlanSource | null {
 }
 
 /** What to draw: the limits, and a short tag naming whose they are when it is not obvious. */
+/** What the hover on the plan numbers says: each line can be left out, the e-mail can be masked. */
+export interface TipOptions {
+  email: "full" | "masked" | "hidden";
+  /** Windows / WSL, in front of the account. */
+  source: boolean;
+  /** "Plan: Pro". */
+  plan: boolean;
+  /** The 5-hour and the weekly line. */
+  five: boolean;
+  week: boolean;
+  /** "…, resets 15:40" at the end of those two lines. */
+  reset: boolean;
+  /** "Updated 3m ago". */
+  updated: boolean;
+}
+
+export const DEFAULT_TIP: TipOptions = { email: "full", source: true, plan: true, five: true, week: true, reset: true, updated: false };
+
 export interface PlanView {
   plan: PlanUsage;
   tag?: string;
   source?: PlanSource;
   account?: PlanAccount;
+  /** What the hover shows (everything but "updated" when absent). */
+  tip?: TipOptions;
+}
+
+/** "work@example.com" → "w***@example.com". */
+export function maskEmail(email: string): string {
+  const at = email.indexOf("@");
+  return at < 1 ? "***" : `${email[0]}***${email.slice(at)}`;
+}
+
+function agoText(thenMs: number, nowMs: number): string {
+  const minutes = Math.max(0, Math.floor((nowMs - thenMs) / 60_000));
+  if (minutes < 1) return t("ago.now");
+  if (minutes < 60) return t("ago.m", { n: minutes });
+  if (minutes < 1440) return t("ago.h", { n: Math.floor(minutes / 60) });
+  return t("ago.d", { n: Math.floor(minutes / 1440) });
+}
+
+/** The lines of the hover text, as the options say. Empty when everything is switched off. */
+export function planTip(view: PlanView, nowMs = Date.now()): string[] {
+  const o = view.tip ?? DEFAULT_TIP;
+  const source = view.source === "wsl" ? "WSL" : "Windows";
+  const lines: string[] = [];
+
+  if (view.account) {
+    const email = o.email === "full" ? view.account.email : o.email === "masked" ? maskEmail(view.account.email) : "";
+    if (o.source && email) lines.push(t("plan.tipAccount", { source, email }));
+    else if (o.source) lines.push(t("plan.tipSource", { source }));
+    else if (email) lines.push(email);
+  } else if (o.source) {
+    lines.push(t("plan.tipNoAccount", { source }));
+  }
+  if (o.plan && view.account?.plan) lines.push(t("plan.tipPlan", { plan: planName(view.account.plan) }));
+
+  const limit = (w: PlanWindow | undefined, shown: boolean, key: "five" | "week") => {
+    if (!w || !shown) return;
+    lines.push(t(o.reset ? `plan.${key}` : `plan.${key}NoReset`, { pct: Math.round(shownPct(w, nowMs)), at: resetClock(w.resetsAt, nowMs) }));
+  };
+  limit(view.plan.fiveHour, o.five, "five");
+  limit(view.plan.sevenDay, o.week, "week");
+
+  if (o.updated) lines.push(t("plan.tipUpdated", { ago: agoText(view.plan.updatedAt, nowMs) }));
+  return lines;
 }
 
 /**
@@ -339,17 +400,8 @@ export function paintPlan(el: HTMLElement, view: PlanView | null, variant: "comp
         ? resetClock(w.resetsAt, now)
         : "";
 
-  // Hover: which account this is, then the two limits in full.
-  const sourceName = view.source === "wsl" ? "WSL" : "Windows";
-  const tip: string[] = [
-    view.account
-      ? t("plan.tipAccount", { source: sourceName, email: view.account.email })
-      : t("plan.tipNoAccount", { source: sourceName }),
-  ];
-  if (view.account?.plan) tip.push(t("plan.tipPlan", { plan: planName(view.account.plan) }));
-  for (const [label, w] of parts) {
-    tip.push(t(label === "five" ? "plan.five" : "plan.week", { pct: Math.round(shownPct(w, now)), at: resetClock(w.resetsAt, now) }));
-  }
+  // Hover: what the settings say (which account, the plan, the limits…).
+  const tip = planTip(view, now);
 
   // The same picture as a second ago: only the clocks move. Nothing is rebuilt, or a
   // tooltip waiting to appear would be lost to the DOM changing under the pointer.
@@ -385,5 +437,6 @@ export function paintPlan(el: HTMLElement, view: PlanView | null, variant: "comp
 
   const title = tip.join("\n");
   if (el.title !== title) el.title = title;
+  if (!title) el.removeAttribute("title");
   return true;
 }

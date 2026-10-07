@@ -5,6 +5,12 @@
 What changed in each published version. The same text goes into the GitHub release
 (see [docs/RELEASING.md](docs/RELEASING.md), Japanese). Newest first.
 
+## [Unreleased]
+
+- **Added**: what the hover on the plan numbers shows can be changed in Settings → General → "On hover". The account
+  e-mail can be shown, partly hidden or left out; the Windows / WSL name, the plan name, the 5-hour and weekly limits,
+  the reset time and the last update can each be switched on or off. A preview sits under the options.
+
 ## [1.0.1] — fixes and clean-up
 
 - **Fixed**: in Settings → Connections, the switches of a WSL distro that had been stopped showed as off after it started.

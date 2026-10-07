@@ -53,6 +53,9 @@ Changes version by version are in [CHANGELOG.en.md](CHANGELOG.en.md).
   *Auto* (the session on screen), *Windows*, or *WSL*. Hover the numbers to see the account e-mail and plan
   (read with `claude auth status`).
 - Fetched at startup, without waiting for a first answer (`claude -p "/usage"`, which makes no model call).
+- **What the hover shows is a setting** (Settings → General → On hover): the e-mail shown, partly hidden or left
+  out; the Windows / WSL name, the plan name, the 5-hour and weekly limits, the reset time and the last update each
+  on or off. With a preview.
 - Your own status line keeps printing exactly as before: the relay runs in front of it and puts it back when
   switched off.
 

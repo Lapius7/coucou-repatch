@@ -181,6 +181,14 @@ export interface Settings {
   planSource: string;
   /** "auto" (follow Windows) or a language code from core/i18n.ts. */
   language: string;
+  /** What the hover on the plan numbers shows. */
+  tipEmail: "full" | "masked" | "hidden";
+  tipSource: boolean;
+  tipPlan: boolean;
+  tipFive: boolean;
+  tipWeek: boolean;
+  tipReset: boolean;
+  tipUpdated: boolean;
   /** The first-run setup was shown. */
   setupDone: boolean;
 }
@@ -225,6 +233,13 @@ export const DEFAULT_SETTINGS: Settings = {
   liveDiff: false,
   planSource: "auto",
   language: "auto",
+  tipEmail: "full",
+  tipSource: true,
+  tipPlan: true,
+  tipFive: true,
+  tipWeek: true,
+  tipReset: true,
+  tipUpdated: false,
   setupDone: false,
 };
 
@@ -277,6 +292,15 @@ class AppState {
       tag: both ? (hit.source === "wsl" ? "WSL" : "Win") : undefined,
       source: hit.source,
       account: this.accounts[hit.source],
+      tip: {
+        email: this.settings.tipEmail,
+        source: this.settings.tipSource,
+        plan: this.settings.tipPlan,
+        five: this.settings.tipFive,
+        week: this.settings.tipWeek,
+        reset: this.settings.tipReset,
+        updated: this.settings.tipUpdated,
+      },
     };
   }
   paused = false;

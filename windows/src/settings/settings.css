@@ -310,3 +310,23 @@ select option {
 .grow {
   flex: 1 1 auto;
 }
+
+/* The hover options: indented under the plan limits, with the preview in a small box */
+.tip-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0 4px 16px;
+  padding-left: 12px;
+  border-left: 2px solid var(--hairline);
+}
+
+.tip-preview {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  font: 400 11.5px/1.5 var(--mono);
+  color: var(--dim);
+  white-space: pre-wrap;
+}

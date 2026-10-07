@@ -44,6 +44,22 @@ pub struct Settings {
     /// "auto" (follow Windows), or a language code such as "en" or "ja".
     #[serde(default = "default_language")]
     pub language: String,
+    /// What the hover on the plan numbers shows: "full", "masked" or "hidden" for the e-mail, and
+    /// which lines to keep.
+    #[serde(default = "default_tip_email")]
+    pub tip_email: String,
+    #[serde(default = "default_true")]
+    pub tip_source: bool,
+    #[serde(default = "default_true")]
+    pub tip_plan: bool,
+    #[serde(default = "default_true")]
+    pub tip_five: bool,
+    #[serde(default = "default_true")]
+    pub tip_week: bool,
+    #[serde(default = "default_true")]
+    pub tip_reset: bool,
+    #[serde(default)]
+    pub tip_updated: bool,
     /// The first-run setup was shown (or Claude Code was already connected).
     #[serde(default)]
     pub setup_done: bool,
@@ -51,6 +67,10 @@ pub struct Settings {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_tip_email() -> String {
+    "full".into()
 }
 
 fn default_language() -> String {
@@ -109,6 +129,13 @@ impl Default for Settings {
             plan_source: default_plan_source(),
             live_diff: false,
             language: default_language(),
+            tip_email: default_tip_email(),
+            tip_source: true,
+            tip_plan: true,
+            tip_five: true,
+            tip_week: true,
+            tip_reset: true,
+            tip_updated: false,
             setup_done: false,
         }
     }
@@ -158,6 +185,9 @@ mod tests {
         // What did not exist yet takes its default.
         assert!(s.always_show, "the notch stays on screen unless told otherwise");
         assert!(!s.setup_done);
+        assert_eq!(s.tip_email, "full");
+        assert!(s.tip_source && s.tip_plan && s.tip_five && s.tip_week && s.tip_reset);
+        assert!(!s.tip_updated);
         assert!(!s.live_diff);
         assert_eq!(s.language, "auto");
         assert_eq!(s.notify_mode, "sound");
