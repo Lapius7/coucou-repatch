@@ -2244,34 +2244,81 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 7px;
   /* The page sets the radius inline for the notch shape: the bar is round all the way. */
   border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 1px 6px rgba(0, 0, 0, 0.35);
-  transition: background 0.3s, box-shadow 0.3s;
+  /* A gradient that never stops flowing along the bar; the colours say what the session is doing. */
+  --bar-1: #ff6b8b;
+  --bar-2: #f7b32b;
+  --bar-3: #2dd4a7;
+  --bar-4: #38bdf8;
+  --bar-5: #a78bfa;
+  --bar-speed: 7s;
+  background: linear-gradient(90deg, var(--bar-1), var(--bar-2), var(--bar-3), var(--bar-4), var(--bar-5), var(--bar-1));
+  background-size: 300% 100%;
+  animation: bar-flow var(--bar-speed) linear infinite;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 10px rgba(167, 139, 250, 0.35);
 }
 
+/* Working: cool blues and teals, quicker */
 #island.bar[data-state="working"],
 #island.bar[data-state="searching"] {
-  background: #60a5fa;
-  animation: bar-pulse 1.6s ease-in-out infinite;
+  --bar-1: #38bdf8;
+  --bar-2: #6366f1;
+  --bar-3: #2dd4bf;
+  --bar-4: #60a5fa;
+  --bar-5: #818cf8;
+  --bar-speed: 3.2s;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 12px rgba(56, 189, 248, 0.5);
 }
 
+/* Thinking: violets and pinks */
 #island.bar[data-state="thinking"] {
-  background: #a78bfa;
-  animation: bar-pulse 1.6s ease-in-out infinite;
+  --bar-1: #a78bfa;
+  --bar-2: #f472b6;
+  --bar-3: #8b5cf6;
+  --bar-4: #e879f9;
+  --bar-5: #c084fc;
+  --bar-speed: 4.5s;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 12px rgba(192, 132, 252, 0.5);
 }
 
+/* Waiting for you: warm ambers, fast */
 #island.bar[data-state="approval"],
 #island.bar[data-state="question"] {
-  background: #fbbf24;
-  animation: bar-pulse 0.9s ease-in-out infinite;
+  --bar-1: #fbbf24;
+  --bar-2: #fb923c;
+  --bar-3: #f472b6;
+  --bar-4: #fde047;
+  --bar-5: #f97316;
+  --bar-speed: 1.8s;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 12px rgba(251, 146, 60, 0.6);
 }
 
 #island.bar[data-state="error"] {
-  background: #f4505e;
+  --bar-1: #f4505e;
+  --bar-2: #fb7185;
+  --bar-3: #e11d48;
+  --bar-4: #f97316;
+  --bar-5: #fb7185;
+  --bar-speed: 3s;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 12px rgba(244, 80, 94, 0.55);
 }
 
 #island.bar[data-state="finished"] {
-  background: #34d399;
+  --bar-1: #34d399;
+  --bar-2: #2dd4bf;
+  --bar-3: #a3e635;
+  --bar-4: #38bdf8;
+  --bar-5: #34d399;
+  --bar-speed: 6s;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 12px rgba(52, 211, 153, 0.5);
+}
+
+@keyframes bar-flow {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 300% 0;
+  }
 }
 
 @keyframes bar-pulse {
