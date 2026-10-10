@@ -22,5 +22,6 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2"
-  }
+  },
+  "packageManager": "pnpm@12.6.0"
 }

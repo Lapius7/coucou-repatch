@@ -152,7 +152,7 @@ async function main() {
   };
   scheduleProbe();
   startPlanClock(() => State.planView());
-  // `npm run dev` in a plain browser: `__statusline({rate_limits: {five_hour: {...}, seven_day: {...}}, cwd: "/home/me"})`.
+  // `pnpm run dev` in a plain browser: `__statusline({rate_limits: {five_hour: {...}, seven_day: {...}}, cwd: "/home/me"})`.
   if (!IS_TAURI) (window as unknown as { __statusline: (raw: unknown) => void }).__statusline = takePlan;
 
   // Once a day: is the connection to Claude Code still there? (Claude Code updates and other tools can

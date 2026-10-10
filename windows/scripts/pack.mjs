@@ -1,5 +1,5 @@
 // Copies the packages Tauri buries in target/release/bundle/ into
-// windows/release/, with the names they ship under. Used by `npm run pack` and
+// windows/release/, with the names they ship under. Used by `pnpm run pack` and
 // by the release workflows, so both produce exactly the same file names.
 
 import { readFileSync, mkdirSync, copyFileSync, readdirSync, statSync } from "node:fs";
@@ -66,7 +66,7 @@ const written = [];
 for (const { dir, suffix, names } of packages) {
   const built = newest(join(bundleRoot, dir), suffix);
   if (!built) {
-    console.error(`No *${suffix} in ${join(bundleRoot, dir)} — run \`npm run tauri build\` first.`);
+    console.error(`No *${suffix} in ${join(bundleRoot, dir)} — run \`pnpm run tauri build\` first.`);
     process.exit(1);
   }
   for (const name of names) {

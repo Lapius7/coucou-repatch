@@ -27,11 +27,11 @@ if ($Light) {
 }
 
 Write-Host '1/3  Installing the front end packages...' -ForegroundColor Cyan
-npm install
+pnpm install
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host '2/3  Building the installer (a few minutes the first time)...' -ForegroundColor Cyan
-npm run pack
+pnpm run pack
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $setup = Join-Path $PSScriptRoot 'release\Coucou-Windows-setup.exe'

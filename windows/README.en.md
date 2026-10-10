@@ -161,15 +161,15 @@ Tools, "Desktop development with C++"). WebView2 ships with Windows 10 and 11.
 
 ```powershell
 cd windows
-npm install
-npm run tauri dev      # development build with live reload
-npm run pack           # builds the installer into windows/release/
+pnpm install
+pnpm run tauri dev      # development build with live reload
+pnpm run pack           # builds the installer into windows/release/
 ```
 
-`npm run dev` on its own serves the front end in an ordinary browser, which is enough for working on how the island
+`pnpm run dev` on its own serves the front end in an ordinary browser, which is enough for working on how the island
 looks.
 
-`npm run pack` leaves the installer in `windows/release/` (`Coucou-Windows-setup.exe` and an `.msi`). It is meant for
+`pnpm run pack` leaves the installer in `windows/release/` (`Coucou-Windows-setup.exe` and an `.msi`). It is meant for
 installing on your own PC and is not published anywhere.
 
 Installing is optional: `target/release/coucou.exe` runs by itself. There is no taskbar window and no console. The island
@@ -181,23 +181,23 @@ of `vite.config.ts`; if they move to `shared/sounds/`, change that one line.
 The app icon and the tray icon are drawn in code, like Mochi itself:
 
 ```powershell
-npm run icons          # regenerates src-tauri/icons from scripts/gen-icons.mjs
+pnpm run icons          # regenerates src-tauri/icons from scripts/gen-icons.mjs
 ```
 
 ### Tests
 
 ```powershell
 cd windows
-npm test                          # front end: dangerous-command detection, diffs, plan limits, translations in step
+pnpm test                          # front end: dangerous-command detection, diffs, plan limits, translations in step
 cd src-tauri; cargo test --lib    # Rust: connections, writing settings, the picture preview's limits…
-npx tsc --noEmit                  # type check
+pnpm exec tsc --noEmit                  # type check
 ```
 
 ### Developing (live reload)
 
 ```powershell
 cd windows
-npm run tauri dev
+pnpm run tauri dev
 ```
 
 Front-end changes (`src/`) appear the moment you save. Rust changes rebuild and restart the app by themselves, much faster
@@ -259,9 +259,9 @@ sudo apt install build-essential pkg-config \
   libwebkit2gtk-4.1-dev libgtk-layer-shell-dev libayatana-appindicator3-dev \
   librsvg2-dev libssl-dev libdbus-1-dev patchelf \
   gstreamer1.0-plugins-base gstreamer1.0-plugins-good
-npm install
-npm run tauri dev      # development build with live reload
-npm run pack           # AppImage, .deb and .rpm into windows/release/
+pnpm install
+pnpm run tauri dev      # development build with live reload
+pnpm run pack           # AppImage, .deb and .rpm into windows/release/
 ```
 
 What changes on Linux:

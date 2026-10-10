@@ -163,14 +163,14 @@ Tools の「C++ によるデスクトップ開発」) が要ります。WebView2
 
 ```powershell
 cd windows
-npm install
-npm run tauri dev      # ライブ更新つきの開発ビルド
-npm run pack           # インストーラーを作り、windows/release/ に置く
+pnpm install
+pnpm run tauri dev      # ライブ更新つきの開発ビルド
+pnpm run pack           # インストーラーを作り、windows/release/ に置く
 ```
 
-`npm run dev` だけなら、ふつうのブラウザで画面を確認できます。島の見た目を調整するだけなら、これで足ります。
+`pnpm run dev` だけなら、ふつうのブラウザで画面を確認できます。島の見た目を調整するだけなら、これで足ります。
 
-`npm run pack` は、`windows/release/` にインストーラー (`Coucou-Windows-setup.exe` と `.msi`) を作ります。
+`pnpm run pack` は、`windows/release/` にインストーラー (`Coucou-Windows-setup.exe` と `.msi`) を作ります。
 自分の PC に入れるためのもので、どこにも公開されません。
 
 インストールは必須ではありません。`target/release/coucou.exe` はそのまま動きます。タスクバーにウィンドウは
@@ -182,23 +182,23 @@ npm run pack           # インストーラーを作り、windows/release/ に�
 アプリのアイコンとトレイのアイコンは、Mochi と同じようにコードで描いています。
 
 ```powershell
-npm run icons          # scripts/gen-icons.mjs から src-tauri/icons を作り直す
+pnpm run icons          # scripts/gen-icons.mjs から src-tauri/icons を作り直す
 ```
 
 ### テスト
 
 ```powershell
 cd windows
-npm test                          # 画面側 (危険コマンドの検出、差分、プランの上限、翻訳の対応)
+pnpm test                          # 画面側 (危険コマンドの検出、差分、プランの上限、翻訳の対応)
 cd src-tauri; cargo test --lib    # Rust 側 (接続、設定の書き込み、画像プレビューの制限など)
-npx tsc --noEmit                  # 型チェック
+pnpm exec tsc --noEmit                  # 型チェック
 ```
 
 ### 開発 (ライブ更新)
 
 ```powershell
 cd windows
-npm run tauri dev
+pnpm run tauri dev
 ```
 
 画面側 (`src/`) の変更は、保存した瞬間に反映されます。Rust 側の変更は、自動でビルドし直して
@@ -259,9 +259,9 @@ sudo apt install build-essential pkg-config \
   libwebkit2gtk-4.1-dev libgtk-layer-shell-dev libayatana-appindicator3-dev \
   librsvg2-dev libssl-dev libdbus-1-dev patchelf \
   gstreamer1.0-plugins-base gstreamer1.0-plugins-good
-npm install
-npm run tauri dev      # ライブ更新つきの開発ビルド
-npm run pack           # AppImage、.deb、.rpm を windows/release/ に作る
+pnpm install
+pnpm run tauri dev      # ライブ更新つきの開発ビルド
+pnpm run pack           # AppImage、.deb、.rpm を windows/release/ に作る
 ```
 
 Linux での違い:
