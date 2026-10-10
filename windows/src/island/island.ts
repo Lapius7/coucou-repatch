@@ -370,8 +370,8 @@ export class Island {
   }
 
   /** True while the pointer is over the open island. */
-  isPointerInside(): boolean {
-    if (State.mode !== "expanded") return false;
+  isPointerInside(anyMode = false): boolean {
+    if (!anyMode && State.mode !== "expanded") return false;
     const r = this.islandRect();
     const { x, y } = State.mouse;
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
@@ -774,7 +774,7 @@ export class Island {
       if (State.settings.hoverOpen && State.mode === "compact" && !State.fileDragOver) {
         this.hoverOpenTimer = window.setTimeout(() => {
           this.hoverOpenTimer = null;
-          if (State.mode === "compact" && this.isPointerInside() && State.settings.hoverOpen) this.fsm.click();
+          if (State.mode === "compact" && this.isPointerInside(true) && State.settings.hoverOpen) this.fsm.click();
         }, 450);
       }
     }
@@ -1112,6 +1112,8 @@ export class Island {
     Sound.setVolume(State.settings.soundVolume);
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     this.fsm.keepVisible = State.settings.alwaysShow;
+    // The closed shape (notch / bar) and the like come from the settings window too.
+    this.animateGeometry(false);
     State.notify();
   }
 
