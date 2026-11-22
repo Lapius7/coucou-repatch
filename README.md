@@ -64,7 +64,7 @@ powershell -ExecutionPolicy Bypass -File install-from-source.ps1
 |---|---|
 | `windows/` | この Fork の本体: Windows / WSL 版のアプリ (Tauri 2、Rust と TypeScript)。Linux でもビルドできます |
 | `windows/docs/` | WSL での動作確認の手順 ([TESTING_WSL.md](windows/docs/TESTING_WSL.md))、リリースの手順 ([RELEASING.md](windows/docs/RELEASING.md)) |
-| `NotchBuddy/Resources/sounds/` | アプリが使うサウンド。元の作者のもので、MIT の対象外です ([LICENSE-ASSETS.md](LICENSE-ASSETS.md))。Windows 版のビルドが、この場所を読みます |
+| `NotchBuddy/Resources/sounds/` | アプリが使うサウンド。元の作者のもので、MIT の対象外です ([LICENSE-ASSETS.md](LICENSE-ASSETS.md))。Windows 版のビルドがこの場所を読みます |
 
 ## ライセンス
 
