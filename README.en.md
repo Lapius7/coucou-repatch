@@ -1,6 +1,24 @@
-# Coucou — Windows / WSL fork (repatch)
+<div align="center">
 
-[日本語](README.md) · **English**
+<p align="center"><a href="README.md">日本語</a> | <b>English</b></p>
+
+<h1 align="center">Coucou Windows Fork</h1>
+
+<h3 align="center">A Windows app that watches Claude Code from a small island at the top of your screen.</h3>
+
+<p align="center">
+  <a href="https://github.com/Lapius7/coucou-repatch/releases"><img alt="Release" src="https://img.shields.io/github/v/release/Lapius7/coucou-repatch?label=release&style=flat-square&color=e8833a&logo=github"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/Lapius7/coucou-repatch?style=flat-square&color=97ca00"></a>
+  <a href="https://tauri.app/"><img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24c8db?style=flat-square&logo=tauri&logoColor=white"></a>
+  <a href="https://github.com/Lapius7/coucou-repatch/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Lapius7/coucou-repatch?style=flat-square&color=e3b341&logo=github"></a>
+  <a href="https://github.com/Lapius7/coucou-repatch/commits/windows-fork"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Lapius7/coucou-repatch?label=last%20commit&style=flat-square&color=2f81f7"></a>
+</p>
+
+<p align="center"><a href="#what-it-does">What it does</a> · <a href="#getting-started">Getting started</a> · <a href="#what-is-in-this-repository">What is in this repository</a> · <a href="#license">License</a></p>
+
+</div>
+
+---
 
 A Windows app that keeps an eye on Claude Code from a small island at the top of your screen. Answer permission
 requests, read what Claude changed in a file, check your plan limits — without leaving what you are doing.
@@ -8,6 +26,7 @@ requests, read what Claude changed in a file, check your plan limits — without
 This is a fork of [Louis-CFM/coucou](https://github.com/Louis-CFM/coucou) with the Windows app (`windows/`) heavily
 reworked. Claude Code inside WSL is supported too.
 
+> [!IMPORTANT]
 > **Only the source code is published.** The name "Coucou", the Mochi character, the icons and the sounds belong to
 > Louis Raillé ([LICENSE-ASSETS.md](LICENSE-ASSETS.md)), so builds that contain them cannot be distributed. There is
 > no installer to download: **build it yourself** (one command).

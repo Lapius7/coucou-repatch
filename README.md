@@ -1,6 +1,24 @@
-# Coucou — Windows / WSL Fork (repatch)
+<div align="center">
 
-**日本語** · [English](README.en.md)
+<p align="center"><b>日本語</b> | <a href="README.en.md">English</a></p>
+
+<h1 align="center">Coucou Windows Fork</h1>
+
+<h3 align="center">Claude Code の作業を、画面の上の小さな島で見守る Windows アプリ。</h3>
+
+<p align="center">
+  <a href="https://github.com/Lapius7/coucou-repatch/releases"><img alt="Release" src="https://img.shields.io/github/v/release/Lapius7/coucou-repatch?label=release&style=flat-square&color=e8833a&logo=github"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/Lapius7/coucou-repatch?style=flat-square&color=97ca00"></a>
+  <a href="https://tauri.app/"><img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24c8db?style=flat-square&logo=tauri&logoColor=white"></a>
+  <a href="https://github.com/Lapius7/coucou-repatch/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Lapius7/coucou-repatch?style=flat-square&color=e3b341&logo=github"></a>
+  <a href="https://github.com/Lapius7/coucou-repatch/commits/windows-fork"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Lapius7/coucou-repatch?label=last%20commit&style=flat-square&color=2f81f7"></a>
+</p>
+
+<p align="center"><a href="#できること">できること</a> · <a href="#はじめかた">はじめかた</a> · <a href="#このリポジトリの中身">このリポジトリの中身</a> · <a href="#ライセンス">ライセンス</a></p>
+
+</div>
+
+---
 
 Claude Code の作業を、画面の上に出る小さな島で見守る Windows アプリです。権限確認に答える、ファイルの
 編集差分を見る、プランの上限を確認する、といったことが、今やっている作業から離れずにできます。
@@ -8,6 +26,7 @@ Claude Code の作業を、画面の上に出る小さな島で見守る Windows
 [Louis-CFM/coucou](https://github.com/Louis-CFM/coucou) の Fork で、Windows 版 (`windows/`) を大きく作り込んでいます。
 WSL の Claude Code にも対応しています。
 
+> [!IMPORTANT]
 > **公開しているのはソースコードだけです。** 「Coucou」の名前、Mochi のキャラクター、アイコン、サウンドは
 > Louis Raillé のもので ([LICENSE-ASSETS.md](LICENSE-ASSETS.md))、これらを含むビルドは配布できません。
 > インストーラーは配布しないので、**自分でビルド**してください (コマンド1つです)。
